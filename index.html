@@ -1315,7 +1315,7 @@
     <div class="hw-row">
       <div class="check-label">
         <div class="check-label-inner">
-          RAM
+          시스템 물리 메모리 가용 용량 및 누수 여부
         </div>
       </div>
       <div class="hw-spec">
@@ -1332,7 +1332,7 @@
     <div class="hw-row">
       <div class="check-label">
         <div class="check-label-inner">
-          HDD 용량
+          HDD 스토리지 섹터 무결성 및 판독 데이터 가용 공간
           <span class="sub">기준: 4TB</span>
         </div>
       </div>
@@ -1424,7 +1424,7 @@
       <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-db"></div>
     </div>
     <div class="sw-row">
-      <div class="check-label"><div class="check-label-inner">오류 발생 여부</div></div>
+      <div class="check-label"><div class="check-label-inner">TOP/SIDE 위치 변경 여부</div></div>
       <div class="check-result" id="r-corp-err">
         <button class="result-btn" onclick="setResult('corp-err','ok',this)">정상</button>
         <button class="result-btn" onclick="setResult('corp-err','ng',this)">오류</button>
@@ -1622,7 +1622,7 @@
       <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-lcd"></div>
     </div>
     <div class="hw-row">
-      <div class="check-label"><div class="check-label-inner">CPU<span class="sub">기준: i7-14700</span></div></div>
+      <div class="check-label"><div class="check-label-inner">AI 연산 시 프로세서 리소스 부하율 및 점유율<span class="sub">기준: i7-14700</span></div></div>
       <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="i7-14700" id="spec-ap-cpu"></div>
       <div class="check-result" id="r-ap-cpu">
         <button class="result-btn" onclick="setResult('ap-cpu','ok',this)">양호</button>
@@ -1686,7 +1686,7 @@
     <div class="sw-row"><div class="check-label"><div class="check-label-inner">판독된 위해물품 위치 알림정보(사각형) 표출 상태</div></div><div class="check-result" id="r-ap-roi"><button class="result-btn" onclick="setResult('ap-roi','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-roi','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-roi','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-roi"></div></div>
     <div class="sw-row"><div class="check-label"><div class="check-label-inner">위해물품 탐지 시 소리알람 및 테두리 알람 정상 작동 여부</div></div><div class="check-result" id="r-ap-alarm"><button class="result-btn" onclick="setResult('ap-alarm','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-alarm','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-alarm','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-alarm"></div></div>
     <div class="sw-row"><div class="check-label"><div class="check-label-inner">통계 기능 (DB 확인 등) 정상 작동 여부</div></div><div class="check-result" id="r-ap-db"><button class="result-btn" onclick="setResult('ap-db','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-db','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-db','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-db"></div></div>
-    <div class="sw-row"><div class="check-label"><div class="check-label-inner">오류 발생 여부</div></div><div class="check-result" id="r-ap-err"><button class="result-btn" onclick="setResult('ap-err','ok',this)">정상</button><button class="result-btn" onclick="setResult('ap-err','ng',this)">오류</button><button class="result-btn na" onclick="setResult('ap-err','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-err"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">TOP/SIDE 위치 변경 여부</div></div><div class="check-result" id="r-ap-err"><button class="result-btn" onclick="setResult('ap-err','ok',this)">정상</button><button class="result-btn" onclick="setResult('ap-err','ng',this)">오류</button><button class="result-btn na" onclick="setResult('ap-err','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-err"></div></div>
   </div>
 
   <!-- 공항 시스템 -->
@@ -2275,7 +2275,7 @@ const CHECK_LABELS = {
   'roi':   '위해물품 위치 알림정보(사각형) 표출 상태',
   'alarm': '소리알람 및 테두리 알람 정상 작동 여부',
   'db':    '통계 기능(DB 확인 등) 정상 작동 여부',
-  'err':   '오류 발생 여부',
+  'err':   'TOP/SIDE 위치 변경 여부',
   // 시스템
   'rt':    '시스템 런타임 환경 정상 구동 확인',
   'ntp':   'NTP(Local) 기반 시스템/RTC 타임 동기화',
@@ -2675,15 +2675,15 @@ async function exportPptx(prefix) {
       // 슬라이드 6: 카테고리 표출 + 위치 정보
       ['03','유지보수 내용','기능 정상작동 여부',
         'cat',  'roi',   '카테고리별 표출 상태 확인', '위치 정보 표출 확인'],
-      // 슬라이드 7: 통계 + 테두리 알람
+      // 슬라이드 7: 통계 + 오류발생여부
       ['03','유지보수 내용','기능 정상작동 여부',
-        'db',   null,    '통계',                     null],
-      // 슬라이드 8: 오류 (TOP/SIDE + DEEP:SECURITY)
+        'db',   'err',   '통계',                     null],
+      // 슬라이드 8: 오류 (TOP/SIDE 위치 변경 여부 + DEEP:SECURITY)
       ['03','유지보수 내용','오류 발생여부',
-        'err',  'crash', 'Top/Side 위치',            '이벤트 뷰어'],
-      // 슬라이드 9: 오류 (화면 캡처)
+        'crash','os',    '이벤트 뷰어',              '화면 캡처'],
+      // 슬라이드 9: 오류 (dump)
       ['03','유지보수 내용','오류 발생여부',
-        'os',   'dump',  '화면 캡처',                '화면 캡처'],
+        'dump', null,    '화면 캡처',                null],
       // 슬라이드 10: CPU + GPU
       ['03','유지보수 내용','H/W 상태점검',
         'cpu',  'gpu',   'CPU',                      'GPU'],
