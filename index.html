@@ -580,6 +580,91 @@
   .badge-amber { background: #fef3c7; color: #92400e; }
   .badge-same { background: #f3f4f6; color: #6b7280; }
 
+
+  /* ── 사진 그룹 (공항용) ── */
+  .photo-group-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--surface2);
+    border-bottom: 2px solid var(--primary);
+    padding: 8px 16px;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .photo-group-header::before {
+    content: '📷';
+    font-size: 13px;
+  }
+  .photo-group-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .photo-group-grid:last-of-type { border-bottom: none; }
+
+  /* 고정 캡션 라벨 */
+  .photo-caption-fixed {
+    padding: 4px 2px 0;
+    width: 100%;
+  }
+  .cap-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: center;
+    background: #eff6ff;
+    border-radius: 4px;
+    padding: 3px 6px;
+    border: 1px solid #bfdbfe;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 640px) {
+    .photo-group-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 10px 12px;
+    }
+    .cap-label { font-size: 10px; }
+    .photo-group-header { font-size: 11px; padding: 7px 12px; }
+  }
+  @media (max-width: 380px) {
+    .photo-group-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* 인쇄 시 그룹 유지 */
+  @media print {
+    .photo-group-grid { display: grid !important; grid-template-columns: repeat(3,1fr); gap:6px; padding:8px; }
+    .photo-group-header { font-size:10px; padding:5px 10px; }
+    .cap-label { font-size:9px; }
+  }
+
+  /* ── 확인자: 이름 + 서명란 한 셀 안에 나란히 ── */
+  .confirmer-sig-field {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .confirmer-sig-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  @media (max-width: 600px) {
+    .confirmer-sig-field { grid-column: 1 / -1; }
+  }
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -1135,20 +1220,23 @@
   <!-- HEADER -->
   <div class="form-header">
     <h1>📋 기업 AI 판독 지원시스템 유지보수 점검표</h1>
-    <div class="subtitle">붙임 3) · 수정본 F01 · 20260416</div>
     <div class="meta-grid">
       <div class="meta-field"><label>업체명</label><input type="text" placeholder="업체명 입력" id="corp-company"></div>
       <div class="meta-field"><label>설치장소</label><input type="text" placeholder="설치 위치 입력" id="corp-location"></div>
       <div class="meta-field"><label>점검자</label><input type="text" placeholder="점검자 성명" id="corp-inspector"></div>
       <div class="meta-field"><label>점검일자</label><input type="date" id="corp-date"></div>
       <div class="meta-field"><label>모델명 (S/N)</label><input type="text" placeholder="모델명 / 시리얼번호" id="corp-model"></div>
-      <div class="sig-field">
+      <div class="meta-field">
+        <label>확인자</label>
+        <input type="text" placeholder="확인자 성명" id="corp-confirmer">
+      </div>
+      <div class="sig-field confirmer-sig-field">
         <label>확인자 서명</label>
         <div class="sig-box" id="corp-sig-box" onclick="openSigModal('corp')">
           <img class="sig-preview" id="corp-sig-img" src="" alt="서명">
           <div class="sig-placeholder">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            서명 클릭하여 입력
+            서명란 클릭하여 입력
           </div>
           <button class="sig-clear" onclick="clearSig(event,'corp')">✕ 삭제</button>
         </div>
@@ -1191,7 +1279,7 @@
     <div class="hw-row">
       <div class="check-label">
         <div class="check-label-inner">
-          CPU (H/W 기준)
+          AI 연산 시 프로세서 리소스 부하율 및 점유율
           <span class="sub">기준: i7-14700</span>
         </div>
       </div>
@@ -1209,7 +1297,7 @@
     <div class="hw-row">
       <div class="check-label">
         <div class="check-label-inner">
-          GPU / VRAM
+          GPU 연산 가속 엔진 및 비디오 메모리 안정성
           <span class="sub">기준: RTX 4070Ti</span>
         </div>
       </div>
@@ -1444,9 +1532,9 @@
   <div class="photo-section">
     <div class="section-header">
       <span class="section-icon">📸</span>
-      점검 사진 첨부 (최대 20장)
+      점검 사진 첨부
     </div>
-    <div class="photo-grid" id="corp-photo-grid"></div>
+    <div id="corp-photo-grid" style="overflow:hidden;"></div>
   </div>
 
   <!-- REMARKS -->
@@ -1480,20 +1568,23 @@
 
   <div class="form-header">
     <h1>✈ 공항 AI 판독 지원시스템 유지보수 점검표</h1>
-    <div class="subtitle">붙임 3) · 수정본 F01 · 20260416</div>
     <div class="meta-grid">
       <div class="meta-field"><label>공항명</label><input type="text" placeholder="공항명 입력" id="airport-company"></div>
       <div class="meta-field"><label>설치장소</label><input type="text" placeholder="게이트/구역 입력" id="airport-location"></div>
       <div class="meta-field"><label>점검자</label><input type="text" placeholder="점검자 성명" id="airport-inspector"></div>
       <div class="meta-field"><label>점검일자</label><input type="date" id="airport-date"></div>
       <div class="meta-field"><label>모델명 (S/N)</label><input type="text" placeholder="모델명 / 시리얼번호" id="airport-model"></div>
-      <div class="sig-field">
+      <div class="meta-field">
+        <label>확인자</label>
+        <input type="text" placeholder="확인자 성명" id="airport-confirmer">
+      </div>
+      <div class="sig-field confirmer-sig-field">
         <label>확인자 서명</label>
         <div class="sig-box" id="airport-sig-box" onclick="openSigModal('airport')">
           <img class="sig-preview" id="airport-sig-img" src="" alt="서명">
           <div class="sig-placeholder">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            서명 클릭하여 입력
+            서명란 클릭하여 입력
           </div>
           <button class="sig-clear" onclick="clearSig(event,'airport')">✕ 삭제</button>
         </div>
@@ -1541,7 +1632,7 @@
       <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-cpu"></div>
     </div>
     <div class="hw-row">
-      <div class="check-label"><div class="check-label-inner">GPU / VRAM<span class="sub">기준: RTX 4070Ti</span></div></div>
+      <div class="check-label"><div class="check-label-inner">GPU 연산 가속 엔진 및 비디오 메모리 안정성<span class="sub">기준: RTX 4070Ti</span></div></div>
       <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="RTX 4070Ti" id="spec-ap-gpu"></div>
       <div class="check-result" id="r-ap-gpu">
         <button class="result-btn" onclick="setResult('ap-gpu','ok',this)">양호</button>
@@ -1551,7 +1642,7 @@
       <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-gpu"></div>
     </div>
     <div class="hw-row">
-      <div class="check-label"><div class="check-label-inner">RAM</div></div>
+      <div class="check-label"><div class="check-label-inner">시스템 물리 메모리 가용 용량 및 누수 여부</div></div>
       <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="용량 입력" id="spec-ap-ram"></div>
       <div class="check-result" id="r-ap-ram">
         <button class="result-btn" onclick="setResult('ap-ram','ok',this)">양호</button>
@@ -1561,7 +1652,7 @@
       <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-ram"></div>
     </div>
     <div class="hw-row">
-      <div class="check-label"><div class="check-label-inner">HDD 용량<span class="sub">기준: 4TB</span></div></div>
+      <div class="check-label"><div class="check-label-inner">HDD 스토리지 섹터 무결성 및 판독 데이터 가용 공간<span class="sub">기준: 4TB</span></div></div>
       <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="4TB" id="spec-ap-hdd"></div>
       <div class="check-result" id="r-ap-hdd">
         <button class="result-btn" onclick="setResult('ap-hdd','ok',this)">양호</button>
@@ -1614,8 +1705,8 @@
 
   <!-- PHOTO -->
   <div class="photo-section">
-    <div class="section-header"><span class="section-icon">📸</span>점검 사진 첨부 (최대 20장)</div>
-    <div class="photo-grid" id="airport-photo-grid"></div>
+    <div class="section-header"><span class="section-icon">📸</span>점검 사진 첨부</div>
+    <div id="airport-photo-grid" style="overflow:hidden;"></div>
   </div>
 
   <div class="remarks-section">
@@ -1852,44 +1943,136 @@ function updateProgress(prefix) {
 }
 
 // ── PHOTO GRID ──
+
+// ══════════════════════════════════════════════════════
+//  공항용 사진 슬롯 정의 (그룹 + 고정 캡션 + PPT 매핑)
+// ══════════════════════════════════════════════════════
+const AIRPORT_PHOTO_SLOTS = [
+  // { idx, caption, group, pptCaptions: [슬라이드에 들어갈 캡션들] }
+  { idx:0,  caption:'서버렉 사진',            group:'청소 상태 점검',    pptCaptions:['서버렉 사진'] },
+  { idx:1,  caption:'모니터 케이블 연결 상태', group:'청소 상태 점검',    pptCaptions:['모니터 케이블 연결 상태'] },
+  { idx:2,  caption:'탐지 확인',              group:'판독 누락여부',     pptCaptions:['탐지 확인','위치 정보 표출 확인','화면 캡처'] },
+  { idx:3,  caption:'확대 탐지 확인',          group:'판독 누락여부',     pptCaptions:['확대 탐지 확인'] },
+  { idx:4,  caption:'카테고리별 표출 상태 확인',group:'기능 정상작동 여부',pptCaptions:['카테고리별 표출 상태 확인'] },
+  { idx:5,  caption:'통계',                   group:'기능 정상작동 여부',pptCaptions:['통계'] },
+  { idx:6,  caption:'Top/Side 위치',          group:'오류 발생여부',     pptCaptions:['Top/Side 위치'] },
+  { idx:7,  caption:'이벤트 뷰어',            group:'오류 발생여부',     pptCaptions:['DEEP:SECURITY 강제종료 여부','이벤트 뷰어'] },
+  { idx:8,  caption:'CPU',                    group:'H/W 상태점검',     pptCaptions:['CPU'] },
+  { idx:9,  caption:'GPU',                    group:'H/W 상태점검',     pptCaptions:['GPU'] },
+  { idx:10, caption:'RAM',                    group:'H/W 상태점검',     pptCaptions:['RAM'] },
+  { idx:11, caption:'HDD 용량',               group:'H/W 상태점검',     pptCaptions:['HDD 용량'] },
+  { idx:12, caption:'분배기',                 group:'H/W 상태점검',     pptCaptions:['VGA분배기 구성 변경'] },
+  { idx:13, caption:'컨버터',                 group:'H/W 상태점검',     pptCaptions:['컨버터'] },
+  { idx:14, caption:'AI PC',                  group:'H/W 상태점검',     pptCaptions:['AI PC','모니터'] },
+  { idx:15, caption:'SECURITY 로그',          group:'S/W 상태점검',     pptCaptions:['SECURITY 로그'] },
+  { idx:16, caption:'Window 시간',            group:'S/W 상태점검',     pptCaptions:['Window 및 BIOS 시간'] },
+  { idx:17, caption:'Bios 시간',              group:'S/W 상태점검',     pptCaptions:['Window 및 BIOS 시간'] },
+  { idx:18, caption:'자동 종료',              group:'S/W 상태점검',     pptCaptions:['자동종료 및 자동부팅'] },
+  { idx:19, caption:'자동 부팅',              group:'S/W 상태점검',     pptCaptions:['자동종료 및 자동부팅'] },
+  { idx:20, caption:'AI 버전',                group:'S/W 상태점검',     pptCaptions:['AI 버전'] },
+  { idx:21, caption:'안정성기록',             group:'S/W 상태점검',     pptCaptions:['안정성 기록'] },
+  { idx:22, caption:'이벤트 뷰어',            group:'S/W 상태점검',     pptCaptions:['이벤트 뷰어'] },
+];
+
+// 기업용 사진 슬롯 — 공항용과 동일한 그룹 구조
+const CORP_PHOTO_SLOTS = [
+  { idx:0,  caption:'서버렉 사진',             group:'청소 상태 점검',    pptCaptions:['서버렉 사진'] },
+  { idx:1,  caption:'모니터 케이블 연결 상태',  group:'청소 상태 점검',    pptCaptions:['모니터 케이블 연결 상태'] },
+  { idx:2,  caption:'탐지 확인',               group:'판독 누락여부',     pptCaptions:['탐지 확인','위치 정보 표출 확인','화면 캡처'] },
+  { idx:3,  caption:'확대 탐지 확인',           group:'판독 누락여부',     pptCaptions:['확대 탐지 확인'] },
+  { idx:4,  caption:'카테고리별 표출 상태 확인', group:'기능 정상작동 여부',pptCaptions:['카테고리별 표출 상태 확인'] },
+  { idx:5,  caption:'통계',                    group:'기능 정상작동 여부',pptCaptions:['통계'] },
+  { idx:6,  caption:'Top/Side 위치',           group:'오류 발생여부',     pptCaptions:['Top/Side 위치'] },
+  { idx:7,  caption:'이벤트 뷰어',             group:'오류 발생여부',     pptCaptions:['DEEP:SECURITY 강제종료 여부','이벤트 뷰어'] },
+  { idx:8,  caption:'CPU',                     group:'H/W 상태점검',     pptCaptions:['CPU'] },
+  { idx:9,  caption:'GPU',                     group:'H/W 상태점검',     pptCaptions:['GPU'] },
+  { idx:10, caption:'RAM',                     group:'H/W 상태점검',     pptCaptions:['RAM'] },
+  { idx:11, caption:'HDD 용량',                group:'H/W 상태점검',     pptCaptions:['HDD 용량'] },
+  { idx:12, caption:'분배기',                  group:'H/W 상태점검',     pptCaptions:['VGA분배기 구성 변경'] },
+  { idx:13, caption:'컨버터',                  group:'H/W 상태점검',     pptCaptions:['컨버터'] },
+  { idx:14, caption:'AI PC',                   group:'H/W 상태점검',     pptCaptions:['AI PC','모니터'] },
+  { idx:15, caption:'SECURITY 로그',           group:'S/W 상태점검',     pptCaptions:['SECURITY 로그'] },
+  { idx:16, caption:'Window 시간',             group:'S/W 상태점검',     pptCaptions:['Window 및 BIOS 시간'] },
+  { idx:17, caption:'Bios 시간',               group:'S/W 상태점검',     pptCaptions:['Window 및 BIOS 시간'] },
+  { idx:18, caption:'자동 종료',               group:'S/W 상태점검',     pptCaptions:['자동종료 및 자동부팅'] },
+  { idx:19, caption:'자동 부팅',               group:'S/W 상태점검',     pptCaptions:['자동종료 및 자동부팅'] },
+  { idx:20, caption:'AI 버전',                 group:'S/W 상태점검',     pptCaptions:['AI 버전'] },
+  { idx:21, caption:'안정성기록',              group:'S/W 상태점검',     pptCaptions:['안정성 기록'] },
+  { idx:22, caption:'이벤트 뷰어',             group:'S/W 상태점검',     pptCaptions:['이벤트 뷰어'] },
+];
+
 function buildPhotoGrid(gridId, prefix, count = 20) {
   const grid = document.getElementById(gridId);
-  for (let i = 0; i < count; i++) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'photo-slot-wrapper';
+  const slots = prefix === 'airport' ? AIRPORT_PHOTO_SLOTS : CORP_PHOTO_SLOTS;
+  const isAirport = prefix === 'airport';
 
-    const slot = document.createElement('div');
-    slot.className = 'photo-slot';
-    slot.id = `${prefix}-slot-${i}`;
+  // 그룹 슬롯 정의가 있으면 그룹형으로 렌더링
+  const hasGroups = slots.some(s => s.group);
+  if (hasGroups) {
+    // 그룹 목록 순서 유지
+    const groups = [];
+    const seen = new Set();
+    slots.forEach(s => { if (!seen.has(s.group)) { seen.add(s.group); groups.push(s.group); }});
 
-    const emptyDiv = document.createElement('div');
-    emptyDiv.className = 'photo-empty';
-    emptyDiv.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>사진 ${i+1}</span>`;
+    groups.forEach(groupName => {
+      const groupSlots = slots.filter(s => s.group === groupName);
 
-    const overlay = document.createElement('div');
-    overlay.className = 'photo-slot-overlay';
-    overlay.innerHTML = `<button class="photo-overlay-btn" onclick="changePhoto('${prefix}',${i})">변경</button><button class="photo-overlay-btn del" onclick="removePhoto('${prefix}',${i})">삭제</button>`;
+      // 그룹 헤더
+      const groupHeader = document.createElement('div');
+      groupHeader.className = 'photo-group-header';
+      groupHeader.textContent = groupName;
+      grid.appendChild(groupHeader);
 
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => handlePhoto(e, prefix, i);
+      // 그룹 내 슬롯 그리드
+      const groupGrid = document.createElement('div');
+      groupGrid.className = 'photo-group-grid';
+      grid.appendChild(groupGrid);
 
-    slot.appendChild(emptyDiv);
-    slot.appendChild(overlay);
-    slot.appendChild(input);
-    wrapper.appendChild(slot);
+      groupSlots.forEach(slotDef => {
+        const i = slotDef.idx;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'photo-slot-wrapper';
 
-    const capDiv = document.createElement('div');
-    capDiv.className = 'photo-caption';
-    const capInput = document.createElement('input');
-    capInput.type = 'text';
-    capInput.placeholder = `캡션 ${i+1}`;
-    capInput.id = `${prefix}-cap-${i}`;
-    capDiv.appendChild(capInput);
-    wrapper.appendChild(capDiv);
+        const slot = document.createElement('div');
+        slot.className = 'photo-slot';
+        slot.id = `${prefix}-slot-${i}`;
 
-    grid.appendChild(wrapper);
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'photo-empty';
+        emptyDiv.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>📷 촬영</span>`;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'photo-slot-overlay';
+        overlay.innerHTML = `<button class="photo-overlay-btn" onclick="changePhoto('${prefix}',${i})">변경</button><button class="photo-overlay-btn del" onclick="removePhoto('${prefix}',${i})">삭제</button>`;
+
+        // 모바일 카메라 직접 촬영 지원
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.setAttribute('capture', 'environment'); // 후면 카메라 기본
+        input.onchange = (e) => handlePhoto(e, prefix, i);
+
+        slot.appendChild(emptyDiv);
+        slot.appendChild(overlay);
+        slot.appendChild(input);
+        wrapper.appendChild(slot);
+
+        // 고정 캡션 라벨 (수정 불가 표시)
+        const capDiv = document.createElement('div');
+        capDiv.className = 'photo-caption photo-caption-fixed';
+        capDiv.innerHTML = `<span class="cap-label">${slotDef.caption}</span>`;
+        // hidden input으로 캡션값 유지
+        const capHidden = document.createElement('input');
+        capHidden.type = 'hidden';
+        capHidden.id = `${prefix}-cap-${i}`;
+        capHidden.value = slotDef.caption;
+        capDiv.appendChild(capHidden);
+        wrapper.appendChild(capDiv);
+
+        groupGrid.appendChild(wrapper);
+      });
+    });
+
   }
 }
 
@@ -1928,8 +2111,8 @@ function removePhoto(prefix, idx) {
   slot.classList.remove('has-photo');
 }
 
-buildPhotoGrid('corp-photo-grid', 'corp', 20);
-buildPhotoGrid('airport-photo-grid', 'airport', 20);
+buildPhotoGrid('corp-photo-grid', 'corp', 23);
+buildPhotoGrid('airport-photo-grid', 'airport', 23);
 
 // ── ACTIONS ──
 function showToast(msg, dur = 2500) {
@@ -2000,6 +2183,7 @@ function collectFormData(prefix) {
   return {
     form_type: label,
     company_name: document.getElementById(prefix + '-company')?.value || '',
+    confirmer: document.getElementById(prefix + '-confirmer')?.value || '',
     location: document.getElementById(prefix + '-location')?.value || '',
     inspector: document.getElementById(prefix + '-inspector')?.value || '',
     inspect_date: document.getElementById(prefix + '-date')?.value || null,
@@ -2010,10 +2194,10 @@ function collectFormData(prefix) {
     hw_specs: specs,
     signature_data: (() => {
       const src = document.getElementById(prefix + '-sig-img')?.src || '';
-      // data URL이 너무 길면 앞 20자만 체크 후 저장 (최대 50KB로 제한)
       if (src.startsWith('data:') && src.length > 50000) return src.substring(0, 50000);
       return src || null;
     })(),
+
     submitted_at: new Date().toISOString(),
   };
 }
@@ -2080,10 +2264,10 @@ const CHECK_LABELS = {
   // H/W
   'fan':   'FAN 소음 및 H/W 렉 먼지 상태점검 및 청소',
   'lcd':   '장비 외부 및 LCD 모니터 상태점검 및 청소',
-  'cpu':   'CPU (기준: i7-14700)',
-  'gpu':   'GPU / VRAM (기준: RTX 4070Ti)',
-  'ram':   'RAM',
-  'hdd':   'HDD 용량 (기준: 4TB)',
+  'cpu':   'AI 연산 시 프로세서 리소스 부하율 및 점유율',
+  'gpu':   'GPU 연산 가속 엔진 및 비디오 메모리 안정성',
+  'ram':   '시스템 물리 메모리 가용 용량 및 누수 여부',
+  'hdd':   'HDD 스토리지 섹터 무결성 및 판독 데이터 가용 공간',
   'io':    'I/O 포트 상태점검',
   // S/W
   'miss':  '판독 누락 여부 확인',
@@ -2210,6 +2394,409 @@ function exportExcel(prefix) {
 //  PPTX 내보내기
 // ══════════════════════════════════════════════════════
 async function exportPptx(prefix) {
+  // 기업용은 기존 방식, 공항용은 KAC 양식
+  if (prefix !== 'airport') {
+    return exportPptxGeneric(prefix);
+  }
+  showToast('📑 공항용 PPT (KAC 양식) 생성 중...');
+  try {
+    const { data, rows } = getFormSnapshot(prefix);
+    const prs = new PptxGenJS();
+    prs.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
+
+    const F = 'Malgun Gothic';
+    const RED = 'FF0000';
+    const NAVY = '13289F';
+    const BLACK = '000000';
+    const GRAY = '595959';
+
+    const airportName = data.company_name || '00공항';
+    const inspectDate = data.inspect_date || '20XX.0.00';
+    const modelSN = data.model_sn || '-';
+    const inspector = data.inspector || '-';
+    const quarter = (() => {
+      const d = new Date(data.inspect_date || new Date());
+      return Math.ceil((d.getMonth()+1)/3) + '분기';
+    })();
+    const year = (data.inspect_date||'').slice(0,4) || new Date().getFullYear();
+
+    // ── 공통 헤더 그리기 함수 ──
+    function addHeader(slide, sectionNum, sectionTitle, unitTitle) {
+      // 빨간 섹션 번호 원
+      slide.addShape(prs.ShapeType.ellipse, {
+        x:0.28, y:0.81, w:0.38, h:0.38,
+        fill:{color:RED}, line:{color:RED}
+      });
+      slide.addText(sectionNum+'.', {
+        x:0.28, y:0.81, w:0.74, h:0.50,
+        fontSize:14, bold:true, color:'FFFFFF', fontFace:F,
+        align:'center', valign:'middle'
+      });
+      // 섹션 제목 (빨간)
+      slide.addText(sectionTitle, {
+        x:0.90, y:0.89, w:7.66, h:0.40,
+        fontSize:18, bold:true, color:RED, fontFace:F, valign:'middle'
+      });
+      // 구분선
+      slide.addShape(prs.ShapeType.line, {
+        x:0.00, y:0.57, w:13.33, h:0.00,
+        line:{color:'CCCCCC', width:1}
+      });
+      // 호기명
+      if (unitTitle) {
+        slide.addText(unitTitle, {
+          x:0.56, y:1.36, w:5.91, h:0.30,
+          fontSize:10, color:GRAY, fontFace:F, valign:'middle'
+        });
+        // 하단 반복 (원본 양식 패턴)
+        slide.addText(unitTitle, {
+          x:0.35, y:1.66, w:6.01, h:0.30,
+          fontSize:10, color:GRAY, fontFace:F, valign:'middle'
+        });
+      }
+    }
+
+    // ── 점검 항목 2개 + 결과 + 사진 슬라이드 ──
+    // 헤더는 호출부에서 이미 그리므로 여기선 항목/사진만 그림
+    function addCheckSlide(slide, sectionNum, sectionTitle, unitTitle,
+                           item1label, item1result, item1memo,
+                           item2label, item2result, item2memo,
+                           photo1data, photo1cap,
+                           photo2data, photo2cap) {
+      // addHeader 호출 제거 — forEach에서 이미 호출함
+
+      const RESULT_COLORS = {ok:'006400', ng:'CC0000', na:'666666', '미입력':'999999'};
+      const RESULT_BG     = {ok:'E8F5E9', ng:'FFEBEE', na:'F5F5F5', '미입력':'F9F9F9'};
+
+      // 점검항목 테이블 영역 (y=2.05 ~ 3.4)
+      // 항목1
+      slide.addShape(prs.ShapeType.rect, {
+        x:0.35, y:2.05, w:12.60, h:0.60,
+        fill:{color:'F0F4FF'}, line:{color:'CCCCCC', width:0.5}
+      });
+      slide.addText(item1label, {
+        x:0.45, y:2.08, w:9.0, h:0.54,
+        fontSize:10, color:BLACK, fontFace:F, valign:'middle'
+      });
+      // 결과 배지
+      const r1 = item1result||'미입력';
+      slide.addShape(prs.ShapeType.roundRect, {
+        x:9.60, y:2.15, w:1.00, h:0.38,
+        fill:{color:RESULT_BG[r1]||'F5F5F5'}, line:{color:RESULT_COLORS[r1]||'999999', width:1},
+        rectRadius:0.05
+      });
+      slide.addText(r1, {
+        x:9.60, y:2.15, w:1.00, h:0.38,
+        fontSize:9, bold:true, color:RESULT_COLORS[r1]||'999999', fontFace:F,
+        align:'center', valign:'middle'
+      });
+      // 메모
+      if (item1memo) {
+        slide.addText('→ ' + item1memo, {
+          x:10.70, y:2.10, w:2.20, h:0.50,
+          fontSize:8, color:GRAY, fontFace:F, valign:'middle', wrap:true
+        });
+      }
+
+      // 항목2
+      slide.addShape(prs.ShapeType.rect, {
+        x:0.35, y:2.72, w:12.60, h:0.60,
+        fill:{color:'F0F4FF'}, line:{color:'CCCCCC', width:0.5}
+      });
+      slide.addText(item2label, {
+        x:0.45, y:2.75, w:9.0, h:0.54,
+        fontSize:10, color:BLACK, fontFace:F, valign:'middle'
+      });
+      const r2 = item2result||'미입력';
+      slide.addShape(prs.ShapeType.roundRect, {
+        x:9.60, y:2.82, w:1.00, h:0.38,
+        fill:{color:RESULT_BG[r2]||'F5F5F5'}, line:{color:RESULT_COLORS[r2]||'999999', width:1},
+        rectRadius:0.05
+      });
+      slide.addText(r2, {
+        x:9.60, y:2.82, w:1.00, h:0.38,
+        fontSize:9, bold:true, color:RESULT_COLORS[r2]||'999999', fontFace:F,
+        align:'center', valign:'middle'
+      });
+      if (item2memo) {
+        slide.addText('→ ' + item2memo, {
+          x:10.70, y:2.77, w:2.20, h:0.50,
+          fontSize:8, color:GRAY, fontFace:F, valign:'middle', wrap:true
+        });
+      }
+
+      // 사진 2장 (원본 y=3.54~6.85 영역)
+      const PIC_Y = 3.54, PIC_H = 3.05;
+      const PIC_LEFT = {x:1.50, w:3.97};
+      const PIC_RIGHT = {x:7.84, w:3.97};
+
+      if (photo1data) {
+        try {
+          slide.addImage({data:photo1data, x:PIC_LEFT.x, y:PIC_Y, w:PIC_LEFT.w, h:PIC_H});
+        } catch(e) { slide.addShape(prs.ShapeType.rect, {x:PIC_LEFT.x,y:PIC_Y,w:PIC_LEFT.w,h:PIC_H,fill:{color:'EEEEEE'},line:{color:'CCCCCC'}}); }
+      } else {
+        slide.addShape(prs.ShapeType.rect, {x:PIC_LEFT.x,y:PIC_Y,w:PIC_LEFT.w,h:PIC_H,fill:{color:'F5F5F5'},line:{color:'DDDDDD',width:0.5}});
+        slide.addText('(사진 없음)', {x:PIC_LEFT.x,y:PIC_Y,w:PIC_LEFT.w,h:PIC_H, fontSize:9,color:'AAAAAA',fontFace:F,align:'center',valign:'middle'});
+      }
+      if (photo1cap) slide.addText(photo1cap, {x:PIC_LEFT.x,y:PIC_Y+PIC_H+0.05,w:PIC_LEFT.w,h:0.25, fontSize:9,color:GRAY,fontFace:F,align:'center'});
+
+      if (photo2data) {
+        try {
+          slide.addImage({data:photo2data, x:PIC_RIGHT.x, y:PIC_Y, w:PIC_RIGHT.w, h:PIC_H});
+        } catch(e) { slide.addShape(prs.ShapeType.rect, {x:PIC_RIGHT.x,y:PIC_Y,w:PIC_RIGHT.w,h:PIC_H,fill:{color:'EEEEEE'},line:{color:'CCCCCC'}}); }
+      } else {
+        slide.addShape(prs.ShapeType.rect, {x:PIC_RIGHT.x,y:PIC_Y,w:PIC_RIGHT.w,h:PIC_H,fill:{color:'F5F5F5'},line:{color:'DDDDDD',width:0.5}});
+        slide.addText('(사진 없음)', {x:PIC_RIGHT.x,y:PIC_Y,w:PIC_RIGHT.w,h:PIC_H, fontSize:9,color:'AAAAAA',fontFace:F,align:'center',valign:'middle'});
+      }
+      if (photo2cap) slide.addText(photo2cap, {x:PIC_RIGHT.x,y:PIC_Y+PIC_H+0.05,w:PIC_RIGHT.w,h:0.25, fontSize:9,color:GRAY,fontFace:F,align:'center'});
+    }
+
+    // 사진 헬퍼: 캡션명으로 슬롯 찾기
+    function getPhotoByCap(capName) {
+      const slot = AIRPORT_PHOTO_SLOTS.find(s => s.caption === capName);
+      if (!slot) return null;
+      return photoData[`airport-${slot.idx}`] || null;
+    }
+    // PPT 캡션 텍스트로 해당 사진 찾기 (pptCaptions 배열 검색)
+    function getPhotoByPptCap(pptCapText) {
+      const slot = AIRPORT_PHOTO_SLOTS.find(s => s.pptCaptions.includes(pptCapText));
+      if (!slot) return null;
+      return photoData[`airport-${slot.idx}`] || null;
+    }
+    // 기존 idx 방식도 유지
+    function getPhoto(idx) {
+      return photoData[`airport-${idx}`] || null;
+    }
+    function getCap(idx) {
+      return document.getElementById(`airport-cap-${idx}`)?.value || '';
+    }
+
+    // 점검 결과 헬퍼
+    function getResult(key) {
+      const fullId = 'ap-' + key;
+      return RESULT_KR[results[fullId] || 'null'] || '미입력';
+    }
+    function getMemo(key) {
+      return document.getElementById('m-ap-' + key)?.value || '';
+    }
+
+    const unitTitle = airportName + ' 1호기';
+
+    // ══ 슬라이드 1: 표지 ══
+    const s1 = prs.addSlide();
+    s1.background = {color:'FFFFFF'};
+    // KAC 로고 영역 (우측 상단)
+    s1.addShape(prs.ShapeType.rect, {
+      x:10.50, y:0.20, w:2.50, h:0.80,
+      fill:{color:'EEEEEE'}, line:{color:'CCCCCC', width:0.5}
+    });
+    s1.addText('KAC\n한국공항공사', {
+      x:10.50, y:0.20, w:2.50, h:0.80,
+      fontSize:10, bold:true, color:NAVY, fontFace:F, align:'center', valign:'middle'
+    });
+    // 제목
+    s1.addText(`KAC ${year}년도 ${quarter} ${airportName} 유지보수 보고서`, {
+      x:0.00, y:3.18, w:13.33, h:0.57,
+      fontSize:24, bold:true, color:BLACK, fontFace:F, align:'center', valign:'middle'
+    });
+    s1.addText(`[ver. ${data.model_sn || '3.0.x'} ${inspectDate} 업데이트 기준]`, {
+      x:6.12, y:3.76, w:4.65, h:0.34,
+      fontSize:12, color:GRAY, fontFace:F, align:'center'
+    });
+    s1.addShape(prs.ShapeType.line, {
+      x:0.5, y:3.10, w:12.33, h:0.00,
+      line:{color:'AAAAAA', width:0.5}
+    });
+
+    // ══ 슬라이드 2: 유지보수 내용 개요 ══
+    const s2 = prs.addSlide();
+    s2.background = {color:'FFFFFF'};
+    addHeader(s2, '01', '유지보수 내용 개요', null);
+    s2.addText(`유지보수 점검 작업일시 : ${inspectDate}`, {
+      x:0.56, y:1.36, w:8.0, h:0.30, fontSize:10, color:BLACK, fontFace:F
+    });
+
+    // 작업내역 표
+    const tblData = [
+      [{text:'작업 일시',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}},
+       {text:'작업 대상',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}},
+       {text:'수량',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}},
+       {text:'작업 내용',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}}],
+      [inspectDate, airportName + ' 1호기', '1개', 'S/W 업데이트 및 유지보수 점검'],
+      [{text:'총   계',options:{bold:true}}, '', '1개', ''],
+    ];
+    s2.addTable(tblData, {
+      x:0.56, y:1.80, w:12.0, h:0.90,
+      fontSize:10, fontFace:F, border:{color:'CCCCCC'},
+      colW:[2.2, 3.5, 1.2, 5.1]
+    });
+
+    // ══ 슬라이드 3: 유지보수 점검표 (점검 결과 요약표) ══
+    const s3 = prs.addSlide();
+    s3.background = {color:'FFFFFF'};
+    addHeader(s3, '02', '유지보수 점검표', null);
+
+    const checkTableData = [
+      [{text:'구분',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}},
+       {text:'점검 항목',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}},
+       {text:'결과',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}},
+       {text:'비고',options:{bold:true,color:'FFFFFF',fill:{color:NAVY}}}],
+    ];
+    rows.forEach(r => {
+      const resultColor = r.result==='양호'?'006400':r.result==='불량'?'CC0000':'666666';
+      checkTableData.push([
+        r.section,
+        r.label,
+        {text:r.result, options:{color:resultColor, bold:true}},
+        r.memo
+      ]);
+    });
+    s3.addTable(checkTableData, {
+      x:0.24, y:1.43, w:12.85, h:5.8,
+      fontSize:8, fontFace:F, border:{color:'CCCCCC'},
+      colW:[2.0, 6.5, 1.0, 3.35]
+    });
+
+    // ══ 슬라이드 4~16: 점검 항목별 상세 슬라이드 ══
+    // 각 슬라이드: 항목 2개 + 사진 2장
+    // 사진 인덱스는 0부터 순서대로 배정
+    let photoIdx = 0;
+
+    // [섹션번호, 섹션제목, 카테고리, key1, key2, 왼쪽사진캡션, 오른쪽사진캡션]
+    // 캡션은 원본 PPT 슬라이드 하단 텍스트 그대로
+    // [섹션번호, 섹션제목, 카테고리, key1, key2, 왼쪽사진캡션, 오른쪽사진캡션]
+    const slideItems = [
+      // 슬라이드 4: 청소
+      ['03','유지보수 내용','청소 상태 점검',
+        'fan',  'lcd',   '서버렉 사진',              '모니터 케이블 연결 상태'],
+      // 슬라이드 5: 판독 누락 + 소리알람 (원본 PPT 패턴)
+      ['03','유지보수 내용','판독 누락여부 / 소리알람',
+        'miss', 'alarm', '탐지 확인',                '확대 탐지 확인'],
+      // 슬라이드 6: 카테고리 표출 + 위치 정보
+      ['03','유지보수 내용','기능 정상작동 여부',
+        'cat',  'roi',   '카테고리별 표출 상태 확인', '위치 정보 표출 확인'],
+      // 슬라이드 7: 통계 + 테두리 알람
+      ['03','유지보수 내용','기능 정상작동 여부',
+        'db',   null,    '통계',                     null],
+      // 슬라이드 8: 오류 (TOP/SIDE + DEEP:SECURITY)
+      ['03','유지보수 내용','오류 발생여부',
+        'err',  'crash', 'Top/Side 위치',            '이벤트 뷰어'],
+      // 슬라이드 9: 오류 (화면 캡처)
+      ['03','유지보수 내용','오류 발생여부',
+        'os',   'dump',  '화면 캡처',                '화면 캡처'],
+      // 슬라이드 10: CPU + GPU
+      ['03','유지보수 내용','H/W 상태점검',
+        'cpu',  'gpu',   'CPU',                      'GPU'],
+      // 슬라이드 11: RAM + HDD
+      ['03','유지보수 내용','H/W 상태점검',
+        'ram',  'hdd',   'RAM',                      'HDD 용량'],
+      // 슬라이드 12: I/O (분배기 + 컨버터)
+      ['03','유지보수 내용','H/W 상태점검',
+        'io',   null,    '분배기',                   '컨버터'],
+      // 슬라이드 13: AI PC + 케이블
+      ['03','유지보수 내용','H/W 상태점검',
+        null,   null,    'AI PC',                    null],
+      // 슬라이드 14: S/W (런타임 + NTP/RTC)
+      ['03','유지보수 내용','S/W 상태점검',
+        'rt',   'ntp',   'SECURITY 로그',             'Window 시간'],
+      // 슬라이드 15: S/W (자동부팅 + AI버전)
+      ['03','유지보수 내용','S/W 상태점검',
+        'pwr',  'ver',   '자동 종료',                 'AI 버전'],
+      // 슬라이드 16: S/W (Crash 이력)
+      ['03','유지보수 내용','S/W 상태점검',
+        'crash','rtc',   '안정성기록',                '이벤트 뷰어'],
+    ];
+
+    slideItems.forEach(([secNum, secTitle, category, key1, key2, defaultCap1, defaultCap2]) => {
+      const sl = prs.addSlide();
+      sl.background = {color:'FFFFFF'};
+
+      const label1 = CHECK_LABELS[key1] || key1;
+      const result1 = key1 ? getResult(key1) : '';
+      const memo1   = key1 ? getMemo(key1) : '';
+      const label2 = key2 ? (CHECK_LABELS[key2] || key2) : '';
+      const result2 = key2 ? getResult(key2) : '';
+      const memo2   = key2 ? getMemo(key2) : '';
+
+      // 원본 PPT 캡션 텍스트로 해당 사진 슬롯 자동 매핑
+      const p1 = getPhotoByPptCap(defaultCap1) || getPhoto(photoIdx);
+      const c1 = defaultCap1 || label1;
+      photoIdx++;
+
+      const p2 = defaultCap2 ? (getPhotoByPptCap(defaultCap2) || getPhoto(photoIdx)) : getPhoto(photoIdx);
+      const c2 = defaultCap2 || (label2||'');
+      photoIdx++;
+
+      // 카테고리 소제목
+      addHeader(sl, secNum, secTitle, unitTitle);
+      sl.addText(category, {
+        x:0.40, y:1.98, w:7.03, h:0.27,
+        fontSize:10, bold:true, color:BLACK, fontFace:F
+      });
+
+      addCheckSlide(sl, secNum, secTitle, unitTitle,
+        label1, result1, memo1,
+        label2||'(해당 없음)', result2||'-', memo2||'',
+        p1, c1,
+        p2, c2);
+    });
+
+    // ══ 마지막 슬라이드: 특이사항 + 서명 ══
+    const sLast = prs.addSlide();
+    sLast.background = {color:'FFFFFF'};
+    addHeader(sLast, '04', '기타 특이사항 및 확인', null);
+
+    sLast.addShape(prs.ShapeType.rect, {
+      x:0.35, y:1.50, w:12.63, h:2.50,
+      fill:{color:'FAFAFA'}, line:{color:'CCCCCC', width:0.5}
+    });
+    sLast.addText(data.remarks || '해당 없음', {
+      x:0.50, y:1.55, w:12.33, h:2.40,
+      fontSize:11, color:BLACK, fontFace:F, valign:'top', wrap:true
+    });
+
+    // 서명
+    sLast.addShape(prs.ShapeType.rect, {
+      x:0.35, y:4.20, w:12.63, h:2.50,
+      fill:{color:'FFFFFF'}, line:{color:'CCCCCC', width:0.5}
+    });
+    // 서명 1
+    sLast.addText('확인자 서명', {
+      x:0.50, y:4.25, w:3.0, h:0.30,
+      fontSize:9, bold:true, color:GRAY, fontFace:F
+    });
+    const sigSrc = document.getElementById('airport-sig-img')?.src || '';
+    if (sigSrc && sigSrc.startsWith('data:')) {
+      try { sLast.addImage({data:sigSrc, x:0.50, y:4.60, w:4.5, h:1.8}); } catch(e) {}
+    } else {
+      sLast.addShape(prs.ShapeType.rect, {x:0.50,y:4.60,w:4.5,h:1.8,fill:{color:'F9F9F9'},line:{color:'DDDDDD',width:0.5}});
+      sLast.addText('(서명 없음)', {x:0.50,y:4.60,w:4.5,h:1.8, fontSize:11,color:'BBBBBB',fontFace:F,align:'center',valign:'middle'});
+    }
+
+    const confirmerName = document.getElementById('airport-confirmer')?.value || '-';
+    [[`점검자: ${inspector}`, 5.5, 4.50],
+     [`확인자: ${confirmerName}`, 5.5, 4.90],
+     [`점검일: ${inspectDate}`, 5.5, 5.30],
+     [`공항명: ${airportName}`, 5.5, 5.70],
+     [`모델(S/N): ${modelSN}`, 5.5, 6.10],
+    ].forEach(([txt,x,y]) => {
+      sLast.addText(txt, {x,y,w:7.0,h:0.35, fontSize:11,color:BLACK,fontFace:F});
+    });
+
+    // 파일 저장
+    const dateStr = inspectDate.replace(/\./g,'');
+    const filename = `${airportName}_${year}년_${quarter}_유지보수_보고서.pptx`;
+    await prs.writeFile({fileName: filename});
+    showToast('✅ KAC 양식 PPT 저장 완료!', 3000);
+
+  } catch(e) {
+    console.error(e);
+    showToast('❌ PPT 생성 실패: ' + e.message, 4000);
+  }
+}
+
+// ── 기업용 기존 PPT (generic) ──
+async function exportPptxGeneric(prefix) {
   showToast('📑 PPT 생성 중...');
   try {
     const { data, rows } = getFormSnapshot(prefix);
@@ -2408,35 +2995,43 @@ async function exportPptx(prefix) {
       });
     });
 
-    // ══ 슬라이드 6: 사진 ══
-    const photoKeys = Object.keys(photoData).filter(k => k.startsWith(prefix+'-'));
-    if (photoKeys.length > 0) {
-      // 4장씩 슬라이드 분할
-      for (let pi = 0; pi < photoKeys.length; pi += 4) {
+    // ══ 슬라이드 6~: 사진 (CORP_PHOTO_SLOTS 그룹 기반) ══
+    const slotGroups = [];
+    const seenGroups = new Set();
+    CORP_PHOTO_SLOTS.forEach(s => {
+      if (!seenGroups.has(s.group)) { seenGroups.add(s.group); slotGroups.push(s.group); }
+    });
+
+    slotGroups.forEach(groupName => {
+      const groupSlots = CORP_PHOTO_SLOTS.filter(s => s.group === groupName);
+      const groupPhotos = groupSlots.filter(s => photoData[`${prefix}-${s.idx}`]);
+      if (groupPhotos.length === 0) return;
+
+      // 그룹당 슬라이드 1장 (최대 4장 2×2 배치)
+      for (let pi = 0; pi < groupPhotos.length; pi += 4) {
         const ps = prs.addSlide();
         ps.background = { color: C.bg };
         ps.addShape(prs.ShapeType.rect,{
           x:0,y:0,w:'100%',h:0.55,fill:{color:C.primary},line:{color:C.primary}
         });
-        ps.addText(`📸  점검 사진 (${pi+1}~${Math.min(pi+4, photoKeys.length)}장)`, {
-          x:0.3,y:0,w:9,h:0.55,fontSize:16,color:C.white,fontFace:FONT,bold:true,valign:'middle'
+        ps.addText(`📸  ${groupName}`, {
+          x:0.3,y:0,w:12,h:0.55,fontSize:15,color:C.white,fontFace:FONT,bold:true,valign:'middle'
         });
-        const chunk = photoKeys.slice(pi, pi+4);
-        chunk.forEach((key, ci) => {
+        const chunk = groupPhotos.slice(pi, pi+4);
+        chunk.forEach((slotDef, ci) => {
           const col = ci % 2, row = Math.floor(ci / 2);
-          const x = 0.3 + col * 4.9, y = 0.7 + row * 2.7;
-          const idx = parseInt(key.split('-')[1]);
-          const caption = document.getElementById(prefix+'-cap-'+idx)?.value || `사진 ${idx+1}`;
+          const x = 0.3 + col * 6.4, y = 0.7 + row * 3.15;
+          const imgData = photoData[`${prefix}-${slotDef.idx}`];
           try {
-            ps.addImage({ data: photoData[key], x, y, w:4.4, h:2.3 });
-          } catch(e) { /* 이미지 오류 무시 */ }
-          ps.addText(caption, {
-            x, y:y+2.33, w:4.4, h:0.28,
-            fontSize:9, color:C.text2, fontFace:FONT, align:'center'
+            ps.addImage({ data: imgData, x, y, w:5.9, h:2.85 });
+          } catch(e) {}
+          ps.addText(slotDef.caption, {
+            x, y:y+2.88, w:5.9, h:0.25,
+            fontSize:9, color:C.text2, fontFace:FONT, align:'center', bold:true
           });
         });
       }
-    }
+    });
 
     // ══ 슬라이드 마지막: 기타 특이사항 + 서명 ══
     const sLast = prs.addSlide();
@@ -2653,12 +3248,14 @@ const sigFonts = [
 
 function openSigModal(target) {
   currentSigTarget = target;
-  document.getElementById('sig-modal-title').textContent =
-    target === 'corp' ? '✍ 확인자 서명 (기업용)' : '✍ 확인자 서명 (공항용)';
+  const titles = {
+    'corp':    '✍ 확인자 서명 (기업용)',
+    'airport': '✍ 확인자 서명 (공항용)',
+  };
+  document.getElementById('sig-modal-title').textContent = titles[target] || '✍ 서명 입력';
   document.getElementById('sig-modal-overlay').classList.add('open');
   initCanvas();
   buildFontGrid();
-  // Resize canvas on open
   requestAnimationFrame(() => resizeCanvas());
 }
 
@@ -2834,8 +3431,8 @@ function applySig() {
 
   const img = document.getElementById(currentSigTarget + '-sig-img');
   const box = document.getElementById(currentSigTarget + '-sig-box');
-  img.src = dataUrl;
-  box.classList.add('signed');
+  if (img) img.src = dataUrl;
+  if (box) box.classList.add('signed');
   closeSigModal();
   showToast('✅ 서명이 적용되었습니다');
 }
