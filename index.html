@@ -1102,38 +1102,7 @@
   }
 
   /* ── 인쇄 스타일 ── */
-  @media print {
-    /* 공통 숨김 */
-    .topbar, .action-bar, .progress-bar-wrap { display: none !important; }
-    body { background: #fff; font-size: 11px; }
-
-    /* 기본: 모든 페이지 숨김 */
-    .page { display: none !important; }
-
-    /* body[data-print="corp"] 이면 기업용만 표시 */
-    body[data-print="corp"] #page-corp { display: block !important; }
-
-    /* body[data-print="airport"] 이면 공항용만 표시 */
-    body[data-print="airport"] #page-airport { display: block !important; }
-
-    /* 레이아웃 정리 */
-    .section-card, .form-header, .photo-section, .remarks-section {
-      box-shadow: none;
-      border: 1px solid #ccc;
-      break-inside: avoid;
-    }
-    .check-col-header, .hw-col-header { display: grid !important; }
-    .sw-row { display: grid !important; grid-template-columns: 1fr 180px 120px; }
-    .hw-row { display: grid !important; grid-template-columns: 1fr 1fr 180px 120px; }
-    .check-label { padding: 6px 10px; font-size: 10px; }
-    .result-btn { font-size: 10px; padding: 3px 2px; }
-    .photo-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .container { padding: 8px; max-width: 100%; }
-    .check-memo::before { display: none; }
-
-    /* 인쇄 페이지 상단 정보 표시 */
-    .form-header { border-top: 4px solid #1a3a6b !important; }
-  }
+  /* 인쇄는 JS 새창 방식으로 처리 — @media print 불필요 */
 
 </style>
 </head>
@@ -2534,13 +2503,84 @@ async function exportPptx(prefix) {
 }
 
 function printForm(prefix) {
-  showToast('🖨 인쇄 창을 엽니다...');
-  // 어떤 페이지를 인쇄할지 body에 표시
-  document.body.setAttribute('data-print', prefix);
+  showToast('🖨 인쇄 창을 준비 중...');
+
+  // 해당 폼 페이지 HTML 추출
+  const pageEl = document.getElementById('page-' + prefix);
+  if (!pageEl) { showToast('❌ 페이지를 찾을 수 없습니다'); return; }
+
+  // 폰트 및 기본 스타일 포함한 인쇄 전용 HTML 생성
+  const printHTML = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AI 판독 지원시스템 유지보수 점검표</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', sans-serif; font-size: 11px; color: #1a2332; background: #fff; }
+  .container { max-width: 100%; padding: 12px; }
+  .progress-bar-wrap, .action-bar { display: none !important; }
+  .form-header { background:#fff; border:1px solid #ccc; border-top:4px solid #1a3a6b; padding:16px; margin-bottom:12px; border-radius:6px; }
+  .form-header h1 { font-size:15px; font-weight:700; color:#1a3a6b; margin-bottom:3px; }
+  .form-header .subtitle { font-size:10px; color:#9ca3af; margin-bottom:12px; }
+  .meta-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .meta-field label { display:block; font-size:9px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; }
+  .meta-field input { width:100%; border:1px solid #e2e6ea; border-radius:4px; padding:5px 8px; font-size:11px; background:#f8f9fb; }
+  .sig-field label { display:block; font-size:9px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; }
+  .sig-box { border:1px solid #1a3a6b; border-radius:4px; padding:4px 8px; min-height:36px; display:flex; align-items:center; }
+  .sig-preview { height:28px; max-width:160px; object-fit:contain; }
+  .sig-placeholder, .sig-clear { display:none; }
+  .section-card { background:#fff; border:1px solid #ccc; margin-bottom:10px; border-radius:6px; overflow:hidden; break-inside:avoid; }
+  .section-header { background:#1a3a6b; color:#fff; padding:8px 14px; font-size:11px; font-weight:700; display:flex; align-items:center; gap:6px; }
+  .section-icon { width:18px; height:18px; background:rgba(255,255,255,.2); border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; }
+  .check-col-header, .hw-col-header { display:grid !important; background:#f8f9fb; border-bottom:1.5px solid #c8cdd5; font-size:9px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.06em; }
+  .check-col-header { grid-template-columns:1fr 160px 110px; }
+  .hw-col-header { grid-template-columns:1fr 1fr 160px 110px; }
+  .col-h { padding:6px 10px; }
+  .col-h.center { text-align:center; border-left:1px solid #e2e6ea; }
+  .sw-row { display:grid !important; grid-template-columns:1fr 160px 110px; border-bottom:1px solid #e2e6ea; }
+  .sw-row:last-child { border-bottom:none; }
+  .hw-row { display:grid !important; grid-template-columns:1fr 1fr 160px 110px; border-bottom:1px solid #e2e6ea; }
+  .hw-row:last-child { border-bottom:none; }
+  .check-label { padding:6px 10px; font-size:10px; line-height:1.4; display:flex; align-items:center; }
+  .check-label-inner { flex:1; }
+  .sub { font-size:9px; color:#9ca3af; display:block; margin-top:1px; }
+  .check-result { border-left:1px solid #e2e6ea; padding:5px 8px; display:flex; align-items:center; gap:4px; }
+  .result-btn { flex:1; padding:4px 2px; border-radius:4px; border:1px solid #e2e6ea; background:#fff; font-size:9px; font-weight:700; text-align:center; color:#4b5563; }
+  .result-btn.ok { background:#dcfce7; border-color:#22c55e; color:#166534; }
+  .result-btn.ng { background:#fee2e2; border-color:#ef4444; color:#991b1b; }
+  .result-btn.na { background:#f3f4f6; border-color:#9ca3af; color:#6b7280; }
+  .check-memo { border-left:1px solid #e2e6ea; padding:5px 8px; display:flex; align-items:center; }
+  .check-memo::before { display:none; }
+  .check-memo input { width:100%; border:1px solid #e2e6ea; border-radius:3px; padding:3px 5px; font-size:10px; background:#f8f9fb; }
+  .hw-spec { border-left:1px solid #e2e6ea; padding:5px 8px; display:flex; align-items:center; gap:5px; font-size:10px; }
+  .hw-spec input { flex:1; border:1px solid #e2e6ea; border-radius:3px; padding:3px 5px; font-size:10px; background:#f8f9fb; }
+  .hw-spec-label { font-weight:700; color:#4b5563; white-space:nowrap; }
+  .photo-section { background:#fff; border:1px solid #ccc; margin-bottom:10px; border-radius:6px; overflow:hidden; break-inside:avoid; }
+  .photo-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:10px; }
+  .photo-slot-wrapper { display:flex; flex-direction:column; gap:3px; }
+  .photo-slot { aspect-ratio:4/3; border:1px solid #c8cdd5; border-radius:5px; position:relative; overflow:hidden; background:#f8f9fb; }
+  .photo-slot img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .photo-slot-overlay, .photo-empty, .photo-slot input { display:none !important; }
+  .photo-caption input { width:100%; border:none; border-bottom:1px solid #e2e6ea; padding:2px 0; font-size:9px; color:#4b5563; background:transparent; }
+  .remarks-section { background:#fff; border:1px solid #ccc; padding:12px; border-radius:6px; break-inside:avoid; }
+  .remarks-section label { display:block; font-size:9px; font-weight:700; color:#1a3a6b; margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em; }
+  .remarks-section textarea { width:100%; border:1px solid #e2e6ea; border-radius:5px; padding:8px; font-size:10px; min-height:60px; background:#f8f9fb; resize:none; }
+  .sig-box.signed .sig-placeholder { display:none; }
+</style>
+</head>
+<body>
+${pageEl.innerHTML}
+<script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }<\/script>
+</body>
+</html>`;
+
   setTimeout(() => {
-    window.print();
-    // 인쇄 다이얼로그 닫힌 후 속성 제거
-    setTimeout(() => document.body.removeAttribute('data-print'), 1000);
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) { showToast('❌ 팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요', 4000); return; }
+    w.document.write(printHTML);
+    w.document.close();
   }, 300);
 }
 
