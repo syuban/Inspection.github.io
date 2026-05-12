@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>AI 판독 지원시스템 유지보수 점검표</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f8f9fb;
+    --border: #e2e6ea;
+    --border-strong: #c8cdd5;
+    --primary: #1a3a6b;
+    --primary-light: #2557a7;
+    --accent: #0ea5e9;
+    --accent2: #f59e0b;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --text: #1a2332;
+    --text2: #4b5563;
+    --text3: #9ca3af;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── TOP NAV ── */
+  .topbar {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .topbar-title { font-size: 15px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .tab-btn {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: #fff; color: var(--primary); border-color: #fff; }
+  .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.2); }
+
+  /* ── LAYOUT ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  /* ── FORM HEADER ── */
+  .form-header {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    border-top: 4px solid var(--primary);
+  }
+  .form-header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .form-header .subtitle {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 20px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media(max-width: 600px) { .meta-grid { grid-template-columns: 1fr 1fr; } }
+
+  .meta-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+  .meta-field input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface2);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .meta-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+    background: #fff;
+  }
+
+  /* ── SECTION CARD ── */
+  .section-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-header .section-icon {
+    width: 22px; height: 22px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+
+  /* ── CHECK ROWS ── */
+  .check-row {
+    display: grid;
+    grid-template-columns: 1fr 180px 120px;
+    align-items: stretch;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-row:hover { background: #f8f9fb; }
+
+  .check-label {
+    padding: 12px 16px 12px 20px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .check-label .sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    display: block;
+    margin-top: 2px;
+  }
+  .check-label-inner { flex: 1; }
+
+  .check-result {
+    border-left: 1px solid var(--border);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .result-btn {
+    flex: 1;
+    padding: 6px 4px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s;
+    color: var(--text2);
+    text-align: center;
+  }
+  .result-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .result-btn.ok { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  .result-btn.ng { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .result-btn.na { background: #f3f4f6; border-color: #9ca3af; color: #6b7280; }
+
+  .check-memo {
+    border-left: 1px solid var(--border);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+  }
+  .check-memo input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface2);
+    transition: all 0.2s;
+  }
+  .check-memo input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(14,165,233,0.1);
+  }
+
+  /* Column headers */
+  .check-col-header {
+    display: grid;
+    grid-template-columns: 1fr 180px 120px;
+    background: var(--surface2);
+    border-bottom: 2px solid var(--border-strong);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .col-h { padding: 8px 16px 8px 20px; }
+  .col-h.center { text-align: center; border-left: 1px solid var(--border); padding: 8px 12px; }
+
+  /* ── H/W SPEC ROW ── */
+  .hw-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 180px 120px;
+    align-items: stretch;
+    border-bottom: 1px solid var(--border);
+  }
+  .hw-row:last-child { border-bottom: none; }
+  .hw-spec {
+    padding: 10px 16px;
+    font-size: 12px;
+    border-left: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hw-spec input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 7px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--primary);
+    background: var(--surface2);
+    transition: all 0.2s;
+  }
+  .hw-spec input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .hw-spec-label { font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .hw-col-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 180px 120px;
+    background: var(--surface2);
+    border-bottom: 2px solid var(--border-strong);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── PHOTO UPLOAD SECTION ── */
+  .photo-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 16px 20px;
+  }
+  @media(max-width: 600px) { .photo-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .photo-slot {
+    aspect-ratio: 4/3;
+    border: 2px dashed var(--border-strong);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface2);
+    position: relative;
+    overflow: hidden;
+  }
+  .photo-slot:hover { border-color: var(--accent); background: rgba(14,165,233,0.04); }
+  .photo-slot.has-photo { border-style: solid; border-color: var(--accent); }
+  .photo-slot img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .photo-slot-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .photo-slot.has-photo:hover .photo-slot-overlay { display: flex; }
+  .photo-overlay-btn {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .photo-overlay-btn:hover { background: #fff; }
+  .photo-overlay-btn.del { color: var(--danger); }
+
+  .photo-empty {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--text3);
+    pointer-events: none;
+  }
+  .photo-empty svg { opacity: 0.5; }
+  .photo-empty span { font-size: 11px; font-weight: 500; }
+  .photo-slot input[type=file] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; z-index: 1;
+  }
+  .photo-slot.has-photo input[type=file] { pointer-events: none; }
+
+  .photo-caption {
+    padding: 4px 8px 0;
+    width: 100%;
+  }
+  .photo-caption input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    padding: 3px 2px;
+    font-size: 11px;
+    font-family: var(--sans);
+    color: var(--text2);
+    background: transparent;
+    transition: border-color 0.2s;
+  }
+  .photo-caption input:focus { outline: none; border-bottom-color: var(--accent); }
+
+  .photo-slot-wrapper { display: flex; flex-direction: column; gap: 4px; }
+
+  /* ── REMARKS ── */
+  .remarks-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .remarks-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .remarks-section textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface2);
+    resize: vertical;
+    min-height: 80px;
+    transition: all 0.2s;
+    line-height: 1.6;
+  }
+  .remarks-section textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+  }
+
+  /* ── PROGRESS ── */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .progress-label { font-size: 12px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-light), var(--accent));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .progress-pct { font-size: 13px; font-weight: 700; color: var(--primary); font-family: var(--mono); min-width: 36px; text-align: right; }
+
+  /* ── ACTION BAR ── */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text2);
+    border: 1.5px solid var(--border-strong);
+    box-shadow: var(--shadow);
+  }
+  .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(26,58,107,0.3);
+  }
+  .btn-primary:hover { background: var(--primary-light); box-shadow: 0 4px 16px rgba(37,87,167,0.35); transform: translateY(-1px); }
+  .btn-success {
+    background: #16a34a;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(22,163,74,0.3);
+  }
+  .btn-success:hover { background: #15803d; transform: translateY(-1px); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    display: none;
+    z-index: 1000;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .modal p { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ── COMPARE PAGE ── */
+  .compare-info {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .compare-info h2 { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
+  .diff-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .diff-table th { background: var(--primary); color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 12px; }
+  .diff-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .diff-table tr:last-child td { border-bottom: none; }
+  .diff-table tr:nth-child(even) td { background: var(--surface2); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin: 1px;
+  }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-same { background: #f3f4f6; color: #6b7280; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+  /* ── SIGNATURE ── */
+  .sig-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .sig-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .sig-box {
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-height: 38px;
+  }
+  .sig-box:hover { border-color: var(--accent); }
+  .sig-box.signed { border-color: var(--primary); background: #fff; }
+  .sig-preview {
+    height: 28px;
+    flex: 1;
+    object-fit: contain;
+    object-position: left center;
+    display: none;
+  }
+  .sig-box.signed .sig-preview { display: block; }
+  .sig-placeholder {
+    font-size: 12px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .sig-box.signed .sig-placeholder { display: none; }
+  .sig-clear {
+    font-size: 10px;
+    color: var(--danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: none;
+    font-family: var(--sans);
+    font-weight: 600;
+  }
+  .sig-box.signed .sig-clear { display: block; }
+
+  /* ── SIGNATURE MODAL ── */
+  .sig-modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .sig-modal-overlay.open { display: flex; }
+  .sig-modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    overflow: hidden;
+  }
+  .sig-modal-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sig-modal-header h3 { font-size: 15px; font-weight: 700; }
+  .sig-modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sig-modal-body { padding: 20px; }
+
+  /* Tabs inside modal */
+  .sig-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .sig-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sig-tab.active { background: #fff; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  .sig-panel { display: none; }
+  .sig-panel.active { display: block; }
+
+  /* Draw panel */
+  .sig-canvas-wrap {
+    border: 2px dashed var(--border-strong);
+    border-radius: 8px;
+    background: #fafbfc;
+    position: relative;
+    overflow: hidden;
+  }
+  .sig-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .sig-canvas-hint {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    color: var(--text3);
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.3s;
+  }
+  .sig-canvas-wrap.drawing .sig-canvas-hint { opacity: 0; }
+
+  .sig-draw-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    gap: 8px;
+  }
+  .sig-color-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .sig-color-dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .sig-color-dot:hover { transform: scale(1.15); }
+  .sig-color-dot.active { border-color: var(--accent); }
+  .sig-thickness {
+    display: flex; gap: 5px; align-items: center;
+  }
+  .sig-thick-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+  .sig-thick-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .sig-clear-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--danger);
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+  .sig-clear-btn:hover { background: #fee2e2; border-color: var(--danger); }
+
+  /* Type panel */
+  .sig-name-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--surface2);
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+  .sig-name-input:focus { outline: none; border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(14,165,233,0.1); }
+
+  .sig-font-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .sig-font-card {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface2);
+  }
+  .sig-font-card.active { border-color: var(--primary); background: #eff6ff; }
+  .sig-font-card:hover { border-color: var(--accent); }
+  .sig-font-card .sig-preview-text {
+    font-size: 20px;
+    line-height: 1.2;
+    color: var(--primary);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sig-font-card .sig-font-label {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--sans);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Upload panel */
+  .sig-upload-zone {
+    border: 2px dashed var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface2);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sig-upload-zone:hover { border-color: var(--accent); background: rgba(14,165,233,0.04); }
+  .sig-upload-zone svg { margin: 0 auto 10px; display: block; opacity: 0.4; }
+  .sig-upload-zone p { font-size: 13px; color: var(--text3); line-height: 1.5; }
+  .sig-upload-zone input { display: none; }
+  .sig-upload-preview { max-width: 100%; max-height: 120px; margin: 12px auto 0; display: block; border-radius: 6px; display: none; }
+
+  /* Modal footer */
+  .sig-modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    background: var(--surface2);
+  }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE — MOBILE FIRST
+     breakpoints: 480px, 640px, 768px
+  ══════════════════════════════════════ */
+
+  /* ── TOPBAR 모바일 ── */
+  @media (max-width: 640px) {
+    .topbar {
+      height: auto;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 10px 12px 8px;
+      gap: 8px;
+    }
+    .topbar-left { gap: 8px; }
+    .topbar-logo { font-size: 11px; padding: 3px 7px; }
+    .topbar-title { font-size: 13px; }
+    .topbar-right {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    .tab-btn {
+      padding: 7px 4px;
+      font-size: 11px;
+      text-align: center;
+      border-radius: 6px;
+    }
+  }
+
+  /* ── CONTAINER ── */
+  @media (max-width: 640px) {
+    .container { padding: 12px 10px 80px; }
+  }
+
+  /* ── FORM HEADER ── */
+  @media (max-width: 640px) {
+    .form-header { padding: 16px 14px; }
+    .form-header h1 { font-size: 14px; }
+    .meta-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  }
+  @media (max-width: 380px) {
+    .meta-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── SECTION HEADER ── */
+  @media (max-width: 640px) {
+    .section-header { font-size: 12px; padding: 10px 14px; }
+  }
+
+  /* ── CHECK ROWS → 모바일 스택 레이아웃 ── */
+  @media (max-width: 640px) {
+    /* 컬럼 헤더 숨김 (모바일에서 공간 낭비) */
+    .check-col-header,
+    .hw-col-header { display: none; }
+
+    /* SW 행: 세로 스택 */
+    .sw-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .sw-row:last-child { border-bottom: none; }
+
+    /* HW 행: 세로 스택 */
+    .hw-row {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+    }
+    .hw-row:last-child { border-bottom: none; }
+
+    /* 항목 라벨 */
+    .check-label {
+      padding: 10px 14px 6px;
+      font-size: 13px;
+      border-left: none;
+      background: var(--surface2);
+    }
+
+    /* H/W 사양 입력 */
+    .hw-spec {
+      border-left: none;
+      border-top: 1px solid var(--border);
+      padding: 8px 14px;
+      background: #fff;
+    }
+
+    /* 결과 버튼 영역 */
+    .check-result {
+      border-left: none;
+      border-top: 1px solid var(--border);
+      padding: 8px 14px;
+      gap: 8px;
+    }
+    .result-btn {
+      padding: 9px 6px;
+      font-size: 13px;
+      border-radius: 7px;
+    }
+
+    /* 비고 입력 */
+    .check-memo {
+      border-left: none;
+      border-top: 1px solid var(--border);
+      padding: 8px 14px 10px;
+    }
+    .check-memo input {
+      font-size: 13px;
+      padding: 7px 10px;
+    }
+
+    /* 비고 라벨 추가 (모바일) */
+    .check-memo::before {
+      content: "비고";
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+  }
+
+  /* ── PHOTO GRID ── */
+  @media (max-width: 640px) {
+    .photo-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 12px;
+    }
+    /* 모바일에선 오버레이 항상 표시 (hover 없으므로) */
+    .photo-slot.has-photo .photo-slot-overlay { display: flex; }
+  }
+  @media (max-width: 420px) {
+    .photo-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ── PROGRESS BAR ── */
+  @media (max-width: 640px) {
+    .progress-bar-wrap { padding: 12px 14px; gap: 10px; }
+    .progress-label { font-size: 11px; }
+  }
+
+  /* ── ACTION BAR → 하단 고정 (모바일) ── */
+  @media (max-width: 640px) {
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      z-index: 90;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+    }
+    .btn {
+      justify-content: center;
+      padding: 11px 8px;
+      font-size: 12px;
+    }
+    /* 제출 버튼 전체 너비 */
+    .action-bar .btn-success {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ── REMARKS ── */
+  @media (max-width: 640px) {
+    .remarks-section { padding: 14px; }
+    .remarks-section textarea { font-size: 14px; }
+  }
+
+  /* ── COMPARE TABLE → 모바일 카드형 ── */
+  @media (max-width: 640px) {
+    .diff-table thead { display: none; }
+    .diff-table, .diff-table tbody, .diff-table tr, .diff-table td {
+      display: block;
+      width: 100%;
+    }
+    .diff-table tr {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .diff-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 12px;
+      position: relative;
+      padding-left: 40%;
+    }
+    .diff-table td:last-child { border-bottom: none; }
+    .diff-table td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+
+  /* ── SIGNATURE MODAL — 모바일 풀스크린 ── */
+  @media (max-width: 640px) {
+    .sig-modal-overlay { padding: 0; align-items: flex-end; }
+    .sig-modal {
+      border-radius: 16px 16px 0 0;
+      max-width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .sig-tabs { flex-direction: row; }
+    .sig-tab { font-size: 11px; padding: 7px 4px; }
+    .sig-font-grid { grid-template-columns: repeat(2, 1fr); }
+    .sig-draw-controls { flex-wrap: wrap; gap: 8px; }
+  }
+
+  /* ── 서명 박스 모바일 ── */
+  @media (max-width: 640px) {
+    .meta-grid .sig-field { grid-column: 1 / -1; }
+    .sig-box { min-height: 44px; }
+  }
+
+  /* ── MODAL 일반 ── */
+  @media (max-width: 640px) {
+    .modal { border-radius: 12px; padding: 20px 16px; }
+    .modal-overlay { padding: 12px; }
+  }
+
+  /* ── 인쇄 스타일 ── */
+  @media print {
+    .topbar, .action-bar, .progress-bar-wrap { display: none !important; }
+    .page { display: block !important; }
+    #page-airport, #page-compare { display: none !important; }
+    body { background: #fff; font-size: 11px; }
+    .section-card, .form-header, .photo-section, .remarks-section {
+      box-shadow: none;
+      border: 1px solid #ccc;
+      break-inside: avoid;
+    }
+    .check-col-header, .hw-col-header { display: grid !important; }
+    .sw-row { display: grid !important; grid-template-columns: 1fr 180px 120px; }
+    .hw-row { display: grid !important; grid-template-columns: 1fr 1fr 180px 120px; }
+    .check-label { padding: 6px 10px; font-size: 10px; }
+    .result-btn { font-size: 10px; padding: 3px 2px; }
+    .photo-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .container { padding: 8px; max-width: 100%; }
+    .check-memo::before { display: none; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">deepnoid</span>
+    <span class="topbar-title">AI 판독 지원시스템 유지보수 점검표</span>
+  </div>
+  <div class="topbar-right">
+    <button class="tab-btn active" data-page="corp" onclick="switchPage('corp')">기업용</button>
+    <button class="tab-btn" data-page="airport" onclick="switchPage('airport')">공항용</button>
+    <button class="tab-btn" data-page="compare" onclick="switchPage('compare')">양식 비교</button>
+  </div>
+</nav>
+
+<!-- ===== 기업용 PAGE ===== -->
+<div class="page active" id="page-corp">
+<div class="container">
+
+  <!-- PROGRESS -->
+  <div class="progress-bar-wrap">
+    <span class="progress-label">점검 완료율</span>
+    <div class="progress-track"><div class="progress-fill" id="corp-progress-fill" style="width:0%"></div></div>
+    <span class="progress-pct" id="corp-progress-pct">0%</span>
+  </div>
+
+  <!-- HEADER -->
+  <div class="form-header">
+    <h1>📋 기업 AI 판독 지원시스템 유지보수 점검표</h1>
+    <div class="subtitle">붙임 3) · 수정본 F01 · 20260416</div>
+    <div class="meta-grid">
+      <div class="meta-field"><label>업체명</label><input type="text" placeholder="업체명 입력" id="corp-company"></div>
+      <div class="meta-field"><label>설치장소</label><input type="text" placeholder="설치 위치 입력" id="corp-location"></div>
+      <div class="meta-field"><label>점검자</label><input type="text" placeholder="점검자 성명" id="corp-inspector"></div>
+      <div class="meta-field"><label>점검일자</label><input type="date" id="corp-date"></div>
+      <div class="meta-field"><label>모델명 (S/N)</label><input type="text" placeholder="모델명 / 시리얼번호" id="corp-model"></div>
+      <div class="sig-field">
+        <label>확인자 서명</label>
+        <div class="sig-box" id="corp-sig-box" onclick="openSigModal('corp')">
+          <img class="sig-preview" id="corp-sig-img" src="" alt="서명">
+          <div class="sig-placeholder">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            서명 클릭하여 입력
+          </div>
+          <button class="sig-clear" onclick="clearSig(event,'corp')">✕ 삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: H/W 상태 -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-icon">🖥</span>
+      1. H/W 상태 점검
+    </div>
+    <div class="hw-col-header">
+      <div class="col-h">점검 항목</div>
+      <div class="col-h" style="border-left:1px solid var(--border)">현재 사양</div>
+      <div class="col-h center">결과</div>
+      <div class="col-h center">비고</div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">FAN 소음 및 H/W 렉 먼지 등 상태점검 및 청소</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">—</span></div>
+      <div class="check-result" id="r-corp-fan">
+        <button class="result-btn" onclick="setResult('corp-fan','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-fan','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-fan','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-fan"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">장비 외부 및 LCD 모니터 상태점검 및 청소</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">—</span></div>
+      <div class="check-result" id="r-corp-lcd">
+        <button class="result-btn" onclick="setResult('corp-lcd','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-lcd','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-lcd','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-lcd"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label">
+        <div class="check-label-inner">
+          CPU (H/W 기준)
+          <span class="sub">기준: i7-14700</span>
+        </div>
+      </div>
+      <div class="hw-spec">
+        <span class="hw-spec-label">현재:</span>
+        <input type="text" placeholder="i7-14700" id="spec-corp-cpu">
+      </div>
+      <div class="check-result" id="r-corp-cpu">
+        <button class="result-btn" onclick="setResult('corp-cpu','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-cpu','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-cpu','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-cpu"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label">
+        <div class="check-label-inner">
+          GPU / VRAM
+          <span class="sub">기준: RTX 4070Ti</span>
+        </div>
+      </div>
+      <div class="hw-spec">
+        <span class="hw-spec-label">현재:</span>
+        <input type="text" placeholder="RTX 4070Ti" id="spec-corp-gpu">
+      </div>
+      <div class="check-result" id="r-corp-gpu">
+        <button class="result-btn" onclick="setResult('corp-gpu','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-gpu','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-gpu','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-gpu"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label">
+        <div class="check-label-inner">
+          RAM
+        </div>
+      </div>
+      <div class="hw-spec">
+        <span class="hw-spec-label">현재:</span>
+        <input type="text" placeholder="용량 입력" id="spec-corp-ram">
+      </div>
+      <div class="check-result" id="r-corp-ram">
+        <button class="result-btn" onclick="setResult('corp-ram','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-ram','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-ram','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-ram"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label">
+        <div class="check-label-inner">
+          HDD 용량
+          <span class="sub">기준: 4TB</span>
+        </div>
+      </div>
+      <div class="hw-spec">
+        <span class="hw-spec-label">현재:</span>
+        <input type="text" placeholder="4TB" id="spec-corp-hdd">
+      </div>
+      <div class="check-result" id="r-corp-hdd">
+        <button class="result-btn" onclick="setResult('corp-hdd','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-hdd','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-hdd','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-hdd"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">I/O 포트 상태점검</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">—</span></div>
+      <div class="check-result" id="r-corp-io">
+        <button class="result-btn" onclick="setResult('corp-io','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-io','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-io','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-io"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: S/W 점검 -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-icon">💻</span>
+      2. S/W 기능 점검
+    </div>
+    <div class="check-col-header">
+      <div class="col-h">점검 항목</div>
+      <div class="col-h center" style="grid-column:2/3">결과</div>
+      <div class="col-h center">비고</div>
+    </div>
+
+    <!-- reuse check-row without hw-spec col, span result wider -->
+    <style>
+    .sw-row { display:grid; grid-template-columns:1fr 180px 120px; align-items:stretch; border-bottom:1px solid var(--border); transition:background 0.15s; }
+    .sw-row:last-child{border-bottom:none;}
+    .sw-row:hover{background:#f8f9fb;}
+    </style>
+
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">판독 누락 여부 확인</div></div>
+      <div class="check-result" id="r-corp-miss">
+        <button class="result-btn" onclick="setResult('corp-miss','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-miss','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-miss','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-miss"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">판독된 위해물품 카테고리별 알림 정보 표출 상태</div></div>
+      <div class="check-result" id="r-corp-cat">
+        <button class="result-btn" onclick="setResult('corp-cat','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-cat','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-cat','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-cat"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">판독된 위해물품 위치 알림정보(사각형) 표출 상태</div></div>
+      <div class="check-result" id="r-corp-roi">
+        <button class="result-btn" onclick="setResult('corp-roi','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-roi','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-roi','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-roi"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">위해물품 탐지 시 소리알람 및 테두리 알람 정상 작동 여부</div></div>
+      <div class="check-result" id="r-corp-alarm">
+        <button class="result-btn" onclick="setResult('corp-alarm','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-alarm','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-alarm','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-alarm"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">통계 기능 (DB 확인 등) 정상 작동 여부</div></div>
+      <div class="check-result" id="r-corp-db">
+        <button class="result-btn" onclick="setResult('corp-db','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-db','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-db','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-db"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">오류 발생 여부</div></div>
+      <div class="check-result" id="r-corp-err">
+        <button class="result-btn" onclick="setResult('corp-err','ok',this)">정상</button>
+        <button class="result-btn" onclick="setResult('corp-err','ng',this)">오류</button>
+        <button class="result-btn na" onclick="setResult('corp-err','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-err"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: 시스템 점검 -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-icon">⚙</span>
+      3. 시스템 / 운영 점검
+    </div>
+    <div class="check-col-header">
+      <div class="col-h">점검 항목</div>
+      <div class="col-h center" style="grid-column:2/3">결과</div>
+      <div class="col-h center">비고</div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">시스템 런타임 환경 정상 구동 확인</div></div>
+      <div class="check-result" id="r-corp-rt">
+        <button class="result-btn" onclick="setResult('corp-rt','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-rt','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-rt','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-rt"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">NTP(Local) 기반 시스템 / RTC 타임 동기화</div></div>
+      <div class="check-result" id="r-corp-ntp">
+        <button class="result-btn" onclick="setResult('corp-ntp','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-ntp','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-ntp','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-ntp"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label">
+        <div class="check-label-inner">
+          RTC 백업 배터리(CR2032) 전압 및 수명 점검
+          <span class="sub">배터리 전압 기재</span>
+        </div>
+      </div>
+      <div class="check-result" id="r-corp-rtc">
+        <button class="result-btn" onclick="setResult('corp-rtc','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-rtc','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-rtc','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="전압(V) 메모" id="m-corp-rtc"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">전원 자동 실행(Auto Power) 및 예약 종료 스케줄 정상 작동</div></div>
+      <div class="check-result" id="r-corp-pwr">
+        <button class="result-btn" onclick="setResult('corp-pwr','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('corp-pwr','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('corp-pwr','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-pwr"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">운영 소프트웨어 및 AI 엔진 버전 최신성 확인</div></div>
+      <div class="check-result" id="r-corp-ver">
+        <button class="result-btn" onclick="setResult('corp-ver','ok',this)">최신</button>
+        <button class="result-btn" onclick="setResult('corp-ver','ng',this)">구버전</button>
+        <button class="result-btn na" onclick="setResult('corp-ver','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="버전 입력" id="m-corp-ver"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">시스템 안정성 히스토리 및 비정상 종료(Crash) 이력</div></div>
+      <div class="check-result" id="r-corp-crash">
+        <button class="result-btn" onclick="setResult('corp-crash','ok',this)">정상</button>
+        <button class="result-btn" onclick="setResult('corp-crash','ng',this)">이상</button>
+        <button class="result-btn na" onclick="setResult('corp-crash','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-crash"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label">
+        <div class="check-label-inner">
+          OS 커널 로그 기반 비정상 종료 이력 확인
+        </div>
+      </div>
+      <div class="check-result" id="r-corp-os">
+        <button class="result-btn" onclick="setResult('corp-os','ok',this)">정상</button>
+        <button class="result-btn" onclick="setResult('corp-os','ng',this)">이상</button>
+        <button class="result-btn na" onclick="setResult('corp-os','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-os"></div>
+    </div>
+    <div class="sw-row">
+      <div class="check-label"><div class="check-label-inner">App Crash Trace 및 로그 덤프(Dump) 분석</div></div>
+      <div class="check-result" id="r-corp-dump">
+        <button class="result-btn" onclick="setResult('corp-dump','ok',this)">정상</button>
+        <button class="result-btn" onclick="setResult('corp-dump','ng',this)">이상</button>
+        <button class="result-btn na" onclick="setResult('corp-dump','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-corp-dump"></div>
+    </div>
+  </div>
+
+  <!-- PHOTO SECTION -->
+  <div class="photo-section">
+    <div class="section-header">
+      <span class="section-icon">📸</span>
+      점검 사진 첨부 (최대 20장)
+    </div>
+    <div class="photo-grid" id="corp-photo-grid"></div>
+  </div>
+
+  <!-- REMARKS -->
+  <div class="remarks-section">
+    <label>기타 특이사항</label>
+    <textarea placeholder="점검 중 발견된 특이사항, 추가 조치 필요 사항 등을 기재하세요..." id="corp-remarks"></textarea>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="action-bar">
+    <button class="btn btn-ghost" onclick="resetForm('corp')">🔄 초기화</button>
+    <button class="btn btn-ghost" onclick="saveDraft('corp')">💾 임시저장</button>
+    <button class="btn btn-primary" onclick="printForm('corp')">🖨 인쇄 / PDF</button>
+    <button class="btn btn-success" onclick="submitForm('corp')">✅ 제출 완료</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== 공항용 PAGE ===== -->
+<div class="page" id="page-airport">
+<div class="container">
+
+  <div class="progress-bar-wrap">
+    <span class="progress-label">점검 완료율</span>
+    <div class="progress-track"><div class="progress-fill" id="airport-progress-fill" style="width:0%"></div></div>
+    <span class="progress-pct" id="airport-progress-pct">0%</span>
+  </div>
+
+  <div class="form-header">
+    <h1>✈ 공항 AI 판독 지원시스템 유지보수 점검표</h1>
+    <div class="subtitle">붙임 3) · 수정본 F01 · 20260416</div>
+    <div class="meta-grid">
+      <div class="meta-field"><label>공항명</label><input type="text" placeholder="공항명 입력" id="airport-company"></div>
+      <div class="meta-field"><label>설치장소</label><input type="text" placeholder="게이트/구역 입력" id="airport-location"></div>
+      <div class="meta-field"><label>점검자</label><input type="text" placeholder="점검자 성명" id="airport-inspector"></div>
+      <div class="meta-field"><label>점검일자</label><input type="date" id="airport-date"></div>
+      <div class="meta-field"><label>모델명 (S/N)</label><input type="text" placeholder="모델명 / 시리얼번호" id="airport-model"></div>
+      <div class="sig-field">
+        <label>확인자 서명</label>
+        <div class="sig-box" id="airport-sig-box" onclick="openSigModal('airport')">
+          <img class="sig-preview" id="airport-sig-img" src="" alt="서명">
+          <div class="sig-placeholder">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            서명 클릭하여 입력
+          </div>
+          <button class="sig-clear" onclick="clearSig(event,'airport')">✕ 삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공항 H/W -->
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">🖥</span>1. H/W 상태 점검</div>
+    <div class="hw-col-header">
+      <div class="col-h">점검 항목</div>
+      <div class="col-h" style="border-left:1px solid var(--border)">현재 사양</div>
+      <div class="col-h center">결과</div>
+      <div class="col-h center">비고</div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">FAN 소음 및 H/W 렉 먼지 등 상태점검 및 청소</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">—</span></div>
+      <div class="check-result" id="r-ap-fan">
+        <button class="result-btn" onclick="setResult('ap-fan','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-fan','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-fan','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-fan"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">장비 외부 및 LCD 모니터 상태점검 및 청소</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">—</span></div>
+      <div class="check-result" id="r-ap-lcd">
+        <button class="result-btn" onclick="setResult('ap-lcd','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-lcd','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-lcd','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-lcd"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">CPU<span class="sub">기준: i7-14700</span></div></div>
+      <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="i7-14700" id="spec-ap-cpu"></div>
+      <div class="check-result" id="r-ap-cpu">
+        <button class="result-btn" onclick="setResult('ap-cpu','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-cpu','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-cpu','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-cpu"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">GPU / VRAM<span class="sub">기준: RTX 4070Ti</span></div></div>
+      <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="RTX 4070Ti" id="spec-ap-gpu"></div>
+      <div class="check-result" id="r-ap-gpu">
+        <button class="result-btn" onclick="setResult('ap-gpu','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-gpu','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-gpu','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-gpu"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">RAM</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="용량 입력" id="spec-ap-ram"></div>
+      <div class="check-result" id="r-ap-ram">
+        <button class="result-btn" onclick="setResult('ap-ram','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-ram','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-ram','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-ram"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">HDD 용량<span class="sub">기준: 4TB</span></div></div>
+      <div class="hw-spec"><span class="hw-spec-label">현재:</span><input type="text" placeholder="4TB" id="spec-ap-hdd"></div>
+      <div class="check-result" id="r-ap-hdd">
+        <button class="result-btn" onclick="setResult('ap-hdd','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-hdd','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-hdd','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-hdd"></div>
+    </div>
+    <div class="hw-row">
+      <div class="check-label"><div class="check-label-inner">I/O 포트 상태점검</div></div>
+      <div class="hw-spec"><span class="hw-spec-label">—</span></div>
+      <div class="check-result" id="r-ap-io">
+        <button class="result-btn" onclick="setResult('ap-io','ok',this)">양호</button>
+        <button class="result-btn" onclick="setResult('ap-io','ng',this)">불량</button>
+        <button class="result-btn na" onclick="setResult('ap-io','na',this)">N/A</button>
+      </div>
+      <div class="check-memo"><input type="text" placeholder="메모" id="m-ap-io"></div>
+    </div>
+  </div>
+
+  <!-- 공항 S/W -->
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">💻</span>2. S/W 기능 점검</div>
+    <div class="check-col-header">
+      <div class="col-h">점검 항목</div>
+      <div class="col-h center" style="grid-column:2/3">결과</div>
+      <div class="col-h center">비고</div>
+    </div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">판독 누락 여부 확인</div></div><div class="check-result" id="r-ap-miss"><button class="result-btn" onclick="setResult('ap-miss','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-miss','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-miss','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-miss"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">판독된 위해물품 카테고리별 알림 정보 표출 상태</div></div><div class="check-result" id="r-ap-cat"><button class="result-btn" onclick="setResult('ap-cat','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-cat','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-cat','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-cat"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">판독된 위해물품 위치 알림정보(사각형) 표출 상태</div></div><div class="check-result" id="r-ap-roi"><button class="result-btn" onclick="setResult('ap-roi','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-roi','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-roi','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-roi"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">위해물품 탐지 시 소리알람 및 테두리 알람 정상 작동 여부</div></div><div class="check-result" id="r-ap-alarm"><button class="result-btn" onclick="setResult('ap-alarm','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-alarm','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-alarm','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-alarm"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">통계 기능 (DB 확인 등) 정상 작동 여부</div></div><div class="check-result" id="r-ap-db"><button class="result-btn" onclick="setResult('ap-db','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-db','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-db','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-db"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">오류 발생 여부</div></div><div class="check-result" id="r-ap-err"><button class="result-btn" onclick="setResult('ap-err','ok',this)">정상</button><button class="result-btn" onclick="setResult('ap-err','ng',this)">오류</button><button class="result-btn na" onclick="setResult('ap-err','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-err"></div></div>
+  </div>
+
+  <!-- 공항 시스템 -->
+  <div class="section-card">
+    <div class="section-header"><span class="section-icon">⚙</span>3. 시스템 / 운영 점검</div>
+    <div class="check-col-header"><div class="col-h">점검 항목</div><div class="col-h center" style="grid-column:2/3">결과</div><div class="col-h center">비고</div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">시스템 런타임 환경 정상 구동 확인</div></div><div class="check-result" id="r-ap-rt"><button class="result-btn" onclick="setResult('ap-rt','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-rt','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-rt','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-rt"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">NTP(Local) 기반 시스템 / RTC 타임 동기화</div></div><div class="check-result" id="r-ap-ntp"><button class="result-btn" onclick="setResult('ap-ntp','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-ntp','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-ntp','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-ntp"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">RTC 백업 배터리(CR2032) 전압 및 수명 점검</div></div><div class="check-result" id="r-ap-rtc"><button class="result-btn" onclick="setResult('ap-rtc','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-rtc','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-rtc','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="전압(V) 메모" id="m-ap-rtc"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">전원 자동 실행(Auto Power) 및 예약 종료 스케줄 정상 작동</div></div><div class="check-result" id="r-ap-pwr"><button class="result-btn" onclick="setResult('ap-pwr','ok',this)">양호</button><button class="result-btn" onclick="setResult('ap-pwr','ng',this)">불량</button><button class="result-btn na" onclick="setResult('ap-pwr','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-pwr"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">운영 소프트웨어 및 AI 엔진 버전 최신성 확인</div></div><div class="check-result" id="r-ap-ver"><button class="result-btn" onclick="setResult('ap-ver','ok',this)">최신</button><button class="result-btn" onclick="setResult('ap-ver','ng',this)">구버전</button><button class="result-btn na" onclick="setResult('ap-ver','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="버전 입력" id="m-ap-ver"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">시스템 안정성 히스토리 및 비정상 종료(Crash) 이력</div></div><div class="check-result" id="r-ap-crash"><button class="result-btn" onclick="setResult('ap-crash','ok',this)">정상</button><button class="result-btn" onclick="setResult('ap-crash','ng',this)">이상</button><button class="result-btn na" onclick="setResult('ap-crash','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-crash"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">OS 커널 로그 기반 비정상 종료 이력 확인</div></div><div class="check-result" id="r-ap-os"><button class="result-btn" onclick="setResult('ap-os','ok',this)">정상</button><button class="result-btn" onclick="setResult('ap-os','ng',this)">이상</button><button class="result-btn na" onclick="setResult('ap-os','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-os"></div></div>
+    <div class="sw-row"><div class="check-label"><div class="check-label-inner">App Crash Trace 및 로그 덤프(Dump) 분석</div></div><div class="check-result" id="r-ap-dump"><button class="result-btn" onclick="setResult('ap-dump','ok',this)">정상</button><button class="result-btn" onclick="setResult('ap-dump','ng',this)">이상</button><button class="result-btn na" onclick="setResult('ap-dump','na',this)">N/A</button></div><div class="check-memo"><input type="text" placeholder="메모" id="m-ap-dump"></div></div>
+  </div>
+
+  <!-- PHOTO -->
+  <div class="photo-section">
+    <div class="section-header"><span class="section-icon">📸</span>점검 사진 첨부 (최대 20장)</div>
+    <div class="photo-grid" id="airport-photo-grid"></div>
+  </div>
+
+  <div class="remarks-section">
+    <label>기타 특이사항</label>
+    <textarea placeholder="점검 중 발견된 특이사항, 추가 조치 필요 사항 등을 기재하세요..." id="airport-remarks"></textarea>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-ghost" onclick="resetForm('airport')">🔄 초기화</button>
+    <button class="btn btn-ghost" onclick="saveDraft('airport')">💾 임시저장</button>
+    <button class="btn btn-primary" onclick="printForm('airport')">🖨 인쇄 / PDF</button>
+    <button class="btn btn-success" onclick="submitForm('airport')">✅ 제출 완료</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== COMPARE PAGE ===== -->
+<div class="page" id="page-compare">
+<div class="container">
+  <div class="compare-info">
+    <h2>📊 기업용 vs 공항용 양식 비교</h2>
+    <table class="diff-table">
+      <thead>
+        <tr>
+          <th style="width:30%">항목</th>
+          <th style="width:30%">기업용</th>
+          <th style="width:30%">공항용</th>
+          <th style="width:10%">차이</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="항목">기관 식별 필드명</td>
+          <td data-label="기업용"><span class="badge badge-blue">업체명</span></td>
+          <td data-label="공항용"><span class="badge badge-amber">공항명</span></td>
+          <td data-label="차이">✏️ 다름</td>
+        </tr>
+        <tr>
+          <td data-label="항목">점검표 제목</td>
+          <td data-label="기업용"><span class="badge badge-blue">기업 AI 판독 지원시스템</span></td>
+          <td data-label="공항용"><span class="badge badge-amber">공항 AI 판독 지원시스템</span></td>
+          <td data-label="차이">✏️ 다름</td>
+        </tr>
+        <tr>
+          <td data-label="항목">공통 기본 정보 필드</td>
+          <td data-label="내용" colspan="2"><span class="badge badge-same">설치장소, 점검자, 점검일자, 모델명(S/N), 확인자 — 동일</span></td>
+          <td data-label="차이">✅ 동일</td>
+        </tr>
+        <tr>
+          <td data-label="항목">H/W 점검 항목</td>
+          <td data-label="내용" colspan="2"><span class="badge badge-same">FAN, LCD, CPU(i7-14700), GPU(RTX 4070Ti), RAM, HDD(4TB), I/O — 동일</span></td>
+          <td data-label="차이">✅ 동일</td>
+        </tr>
+        <tr>
+          <td data-label="항목">S/W 기능 점검</td>
+          <td data-label="내용" colspan="2"><span class="badge badge-same">판독 누락, 카테고리 알림, ROI, 소리알람, DB 통계, 오류 — 동일</span></td>
+          <td data-label="차이">✅ 동일</td>
+        </tr>
+        <tr>
+          <td data-label="항목">시스템 운영 점검</td>
+          <td data-label="내용" colspan="2"><span class="badge badge-same">런타임, NTP/RTC, 배터리, Auto Power, 버전, Crash, OS 로그, Dump — 동일</span></td>
+          <td data-label="차이">✅ 동일</td>
+        </tr>
+        <tr>
+          <td data-label="항목">사진 첨부</td>
+          <td data-label="내용" colspan="2"><span class="badge badge-same">최대 20장 — 동일</span></td>
+          <td data-label="차이">✅ 동일</td>
+        </tr>
+        <tr>
+          <td data-label="항목">기타 특이사항</td>
+          <td data-label="내용" colspan="2"><span class="badge badge-same">자유형식 텍스트 — 동일</span></td>
+          <td data-label="차이">✅ 동일</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="compare-info">
+    <h2>🛠 웹앱 구현 방향 추천</h2>
+    <table class="diff-table">
+      <thead><tr><th>방식</th><th>특징</th><th>추천 상황</th></tr></thead>
+      <tbody>
+        <tr>
+          <td data-label="방식"><strong>이 HTML 샘플</strong><br><span style="font-size:11px;color:#6b7280">단일 파일</span></td>
+          <td data-label="특징">설치 불필요, 브라우저에서 바로 실행, 오프라인 작동</td>
+          <td data-label="추천 상황">소규모 팀, 빠른 도입, 인쇄/PDF 위주</td>
+        </tr>
+        <tr>
+          <td data-label="방식"><strong>React + 백엔드 API</strong><br><span style="font-size:11px;color:#6b7280">웹앱</span></td>
+          <td data-label="특징">서버 저장, 이력 관리, 다중 사용자, 알림 기능</td>
+          <td data-label="추천 상황">여러 현장 동시 운용, 관리자 대시보드 필요</td>
+        </tr>
+        <tr>
+          <td data-label="방식"><strong>모바일 앱 (React Native)</strong><br><span style="font-size:11px;color:#6b7280">iOS/Android</span></td>
+          <td data-label="특징">카메라 직접 촬영, GPS, 오프라인 캐시, 앱스토어 배포</td>
+          <td data-label="추천 상황">현장 점검자가 태블릿/스마트폰으로 작성</td>
+        </tr>
+        <tr>
+          <td data-label="방식"><strong>Google Forms / Notion</strong><br><span style="font-size:11px;color:#6b7280">노코드</span></td>
+          <td data-label="특징">빠른 셋업, 무료, 구글 시트 연동</td>
+          <td data-label="추천 상황">IT 자원 없을 때 임시방편</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- SIGNATURE MODAL -->
+<div class="sig-modal-overlay" id="sig-modal-overlay">
+  <div class="sig-modal">
+    <div class="sig-modal-header">
+      <h3 id="sig-modal-title">✍ 서명 입력</h3>
+      <button class="sig-modal-close" onclick="closeSigModal()">✕</button>
+    </div>
+    <div class="sig-modal-body">
+      <!-- Tabs -->
+      <div class="sig-tabs">
+        <button class="sig-tab active" onclick="switchSigTab('draw',this)">✏️ 직접 서명</button>
+        <button class="sig-tab" onclick="switchSigTab('type',this)">🔤 이름 입력</button>
+        <button class="sig-tab" onclick="switchSigTab('upload',this)">📁 이미지 업로드</button>
+      </div>
+
+      <!-- Draw Panel -->
+      <div class="sig-panel active" id="sig-panel-draw">
+        <div class="sig-canvas-wrap" id="sig-canvas-wrap">
+          <canvas id="sig-canvas" height="180"></canvas>
+          <div class="sig-canvas-hint">
+            <div style="font-size:28px;margin-bottom:6px">✍</div>
+            마우스 또는 터치로 서명하세요
+          </div>
+        </div>
+        <div class="sig-draw-controls">
+          <div class="sig-color-group">
+            <span style="font-size:11px;color:var(--text3);font-weight:600">색상</span>
+            <div class="sig-color-dot active" style="background:#1a2332" data-color="#1a2332" onclick="setSigColor(this)"></div>
+            <div class="sig-color-dot" style="background:#1a3a6b" data-color="#1a3a6b" onclick="setSigColor(this)"></div>
+            <div class="sig-color-dot" style="background:#dc2626" data-color="#dc2626" onclick="setSigColor(this)"></div>
+            <div class="sig-color-dot" style="background:#2563eb" data-color="#2563eb" onclick="setSigColor(this)"></div>
+          </div>
+          <div class="sig-thickness">
+            <span style="font-size:11px;color:var(--text3);font-weight:600">굵기</span>
+            <button class="sig-thick-btn" data-size="1.5" onclick="setSigThick(this)">S</button>
+            <button class="sig-thick-btn active" data-size="2.5" onclick="setSigThick(this)">M</button>
+            <button class="sig-thick-btn" data-size="4" onclick="setSigThick(this)">L</button>
+          </div>
+          <button class="sig-clear-btn" onclick="clearCanvas()">↩ 다시</button>
+        </div>
+      </div>
+
+      <!-- Type Panel -->
+      <div class="sig-panel" id="sig-panel-type">
+        <input class="sig-name-input" type="text" placeholder="확인자 성명을 입력하세요" id="sig-name-input" oninput="renderTypedSig()">
+        <div class="sig-font-grid" id="sig-font-grid">
+          <!-- populated by JS -->
+        </div>
+        <canvas id="sig-type-canvas" style="display:none"></canvas>
+      </div>
+
+      <!-- Upload Panel -->
+      <div class="sig-panel" id="sig-panel-upload">
+        <div class="sig-upload-zone" onclick="document.getElementById('sig-upload-input').click()">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p>클릭하여 서명 이미지 업로드<br><span style="font-size:11px">PNG, JPG, GIF 지원 · 투명 배경 PNG 권장</span></p>
+          <input type="file" id="sig-upload-input" accept="image/*" onchange="handleSigUpload(event)">
+        </div>
+        <img id="sig-upload-preview" class="sig-upload-preview" alt="업로드된 서명">
+      </div>
+    </div>
+    <div class="sig-modal-footer">
+      <button class="btn btn-ghost" onclick="closeSigModal()">취소</button>
+      <button class="btn btn-primary" onclick="applySig()">✅ 서명 적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">확인</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" id="modal-confirm" onclick="closeModal()">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PAGE SWITCH ──
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + name);
+  if (pageEl) pageEl.classList.add('active');
+  // data-page 속성으로 정확히 해당 탭 버튼만 active
+  document.querySelectorAll(`.tab-btn[data-page="${name}"]`).forEach(b => b.classList.add('active'));
+}
+
+// ── RESULT BUTTONS ──
+const results = {};
+function setResult(id, val, btn) {
+  const container = btn.closest('.check-result');
+  container.querySelectorAll('.result-btn').forEach(b => {
+    b.classList.remove('ok','ng','na');
+  });
+  btn.classList.add(val);
+  results[id] = val;
+  updateProgress(id.startsWith('ap-') ? 'airport' : 'corp');
+}
+
+// ── PROGRESS ──
+const corpItems = ['corp-fan','corp-lcd','corp-cpu','corp-gpu','corp-ram','corp-hdd','corp-io',
+  'corp-miss','corp-cat','corp-roi','corp-alarm','corp-db','corp-err',
+  'corp-rt','corp-ntp','corp-rtc','corp-pwr','corp-ver','corp-crash','corp-os','corp-dump'];
+const airportItems = ['ap-fan','ap-lcd','ap-cpu','ap-gpu','ap-ram','ap-hdd','ap-io',
+  'ap-miss','ap-cat','ap-roi','ap-alarm','ap-db','ap-err',
+  'ap-rt','ap-ntp','ap-rtc','ap-pwr','ap-ver','ap-crash','ap-os','ap-dump'];
+
+function updateProgress(prefix) {
+  const items = prefix === 'corp' ? corpItems : airportItems;
+  const done = items.filter(id => results[id]).length;
+  const pct = Math.round(done / items.length * 100);
+  document.getElementById(prefix + '-progress-fill').style.width = pct + '%';
+  document.getElementById(prefix + '-progress-pct').textContent = pct + '%';
+}
+
+// ── PHOTO GRID ──
+function buildPhotoGrid(gridId, prefix, count = 20) {
+  const grid = document.getElementById(gridId);
+  for (let i = 0; i < count; i++) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'photo-slot-wrapper';
+
+    const slot = document.createElement('div');
+    slot.className = 'photo-slot';
+    slot.id = `${prefix}-slot-${i}`;
+
+    const emptyDiv = document.createElement('div');
+    emptyDiv.className = 'photo-empty';
+    emptyDiv.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>사진 ${i+1}</span>`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'photo-slot-overlay';
+    overlay.innerHTML = `<button class="photo-overlay-btn" onclick="changePhoto('${prefix}',${i})">변경</button><button class="photo-overlay-btn del" onclick="removePhoto('${prefix}',${i})">삭제</button>`;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => handlePhoto(e, prefix, i);
+
+    slot.appendChild(emptyDiv);
+    slot.appendChild(overlay);
+    slot.appendChild(input);
+    wrapper.appendChild(slot);
+
+    const capDiv = document.createElement('div');
+    capDiv.className = 'photo-caption';
+    const capInput = document.createElement('input');
+    capInput.type = 'text';
+    capInput.placeholder = `캡션 ${i+1}`;
+    capInput.id = `${prefix}-cap-${i}`;
+    capDiv.appendChild(capInput);
+    wrapper.appendChild(capDiv);
+
+    grid.appendChild(wrapper);
+  }
+}
+
+const photoData = {};
+
+function handlePhoto(e, prefix, idx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    photoData[`${prefix}-${idx}`] = ev.target.result;
+    const slot = document.getElementById(`${prefix}-slot-${idx}`);
+    let img = slot.querySelector('img');
+    if (!img) { img = document.createElement('img'); slot.insertBefore(img, slot.firstChild); }
+    img.src = ev.target.result;
+    slot.classList.add('has-photo');
+    slot.querySelector('input[type=file]').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function changePhoto(prefix, idx) {
+  const slot = document.getElementById(`${prefix}-slot-${idx}`);
+  // Create temp input
+  const tmp = document.createElement('input');
+  tmp.type = 'file'; tmp.accept = 'image/*';
+  tmp.onchange = (e) => handlePhoto(e, prefix, idx);
+  tmp.click();
+}
+
+function removePhoto(prefix, idx) {
+  delete photoData[`${prefix}-${idx}`];
+  const slot = document.getElementById(`${prefix}-slot-${idx}`);
+  const img = slot.querySelector('img');
+  if (img) img.remove();
+  slot.classList.remove('has-photo');
+}
+
+buildPhotoGrid('corp-photo-grid', 'corp', 20);
+buildPhotoGrid('airport-photo-grid', 'airport', 20);
+
+// ── ACTIONS ──
+function showToast(msg, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, dur);
+}
+
+function showModal(title, body, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('modal-confirm').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function resetForm(prefix) {
+  showModal('초기화 확인', '입력한 모든 내용이 삭제됩니다. 계속하시겠습니까?', () => {
+    // Clear results
+    const items = prefix === 'corp' ? corpItems : airportItems;
+    items.forEach(id => {
+      delete results[id];
+      const container = document.getElementById('r-' + id);
+      if(container) container.querySelectorAll('.result-btn').forEach(b => b.classList.remove('ok','ng','na'));
+      const memo = document.getElementById('m-' + id);
+      if(memo) memo.value = '';
+    });
+    // Clear meta
+    ['company','location','inspector','date','model','confirmer'].forEach(f => {
+      const el = document.getElementById(prefix + '-' + f);
+      if(el) el.value = '';
+    });
+    document.getElementById(prefix + '-remarks').value = '';
+    updateProgress(prefix);
+    showToast('초기화 완료');
+  });
+}
+
+// ══════════════════════════════════
+//  SUPABASE 초기화
+// ══════════════════════════════════
+const SUPA_URL = 'https://pnfxhuiaqktvzilboahe.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBuZnhodWlhcWt0dnppbGJvYWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTM3MTQsImV4cCI6MjA5NDEyOTcxNH0.2TAb8rTZtvY2O_bQlXEsRWsRnDtLIh4P-qIs_H8sX6o';
+const _sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── 폼 데이터 수집 ──
+function collectFormData(prefix) {
+  const label = prefix === 'corp' ? '기업' : '공항';
+  const items = prefix === 'corp' ? corpItems : airportItems;
+
+  const checkResults = {};
+  const memos = {};
+  items.forEach(id => {
+    // 키에서 prefix 제거 (예: 'corp-fan' → 'fan', 'ap-fan' → 'fan')
+    const shortKey = id.replace(/^(corp-|ap-)/, '');
+    checkResults[shortKey] = results[id] || null;
+    const memoEl = document.getElementById('m-' + id);
+    memos[shortKey] = memoEl ? memoEl.value.trim() : '';
+  });
+
+  const specs = {};
+  ['cpu','gpu','ram','hdd'].forEach(k => {
+    const el = document.getElementById('spec-' + prefix + '-' + k);
+    if (el) specs[k] = el.value;
+  });
+
+  return {
+    form_type: label,
+    company_name: document.getElementById(prefix + '-company')?.value || '',
+    location: document.getElementById(prefix + '-location')?.value || '',
+    inspector: document.getElementById(prefix + '-inspector')?.value || '',
+    inspect_date: document.getElementById(prefix + '-date')?.value || null,
+    model_sn: document.getElementById(prefix + '-model')?.value || '',
+    remarks: document.getElementById(prefix + '-remarks')?.value || '',
+    check_results: checkResults,
+    memos: memos,
+    hw_specs: specs,
+    signature_data: (() => {
+      const src = document.getElementById(prefix + '-sig-img')?.src || '';
+      // data URL이 너무 길면 앞 20자만 체크 후 저장 (최대 50KB로 제한)
+      if (src.startsWith('data:') && src.length > 50000) return src.substring(0, 50000);
+      return src || null;
+    })(),
+    submitted_at: new Date().toISOString(),
+  };
+}
+
+// ── 사진 업로드 ──
+async function uploadPhotos(prefix, inspectionId) {
+  const uploaded = [];
+  for (let i = 0; i < 20; i++) {
+    const key = prefix + '-' + i;
+    if (!photoData[key]) continue;
+    try {
+      // base64 → Blob
+      const res = await fetch(photoData[key]);
+      const blob = await res.blob();
+      const ext = blob.type.split('/')[1] || 'jpg';
+      const path = `${inspectionId}/${prefix}_photo_${i+1}.${ext}`;
+      const { error } = await _sb.storage
+        .from('inspection-photos')
+        .upload(path, blob, { upsert: true });
+      if (!error) {
+        const caption = document.getElementById(prefix + '-cap-' + i)?.value || '';
+        uploaded.push({ path, caption, index: i + 1 });
+      }
+    } catch(e) { console.warn('photo upload err', i, e); }
+  }
+  return uploaded;
+}
+
+// ── 임시저장 ──
+async function saveDraft(prefix) {
+  showToast('💾 저장 중...');
+  try {
+    const data = collectFormData(prefix);
+    data.status = 'draft';
+    const { data: row, error } = await _sb
+      .from('inspections')
+      .insert([data])
+      .select()
+      .single();
+    if (error) throw error;
+
+    // 사진 업로드
+    if (row?.id) {
+      showToast('📸 사진 업로드 중...');
+      const photos = await uploadPhotos(prefix, row.id);
+      if (photos.length > 0) {
+        await _sb.from('inspections')
+          .update({ photos })
+          .eq('id', row.id);
+      }
+    }
+    showToast('💾 임시저장 완료!', 3000);
+  } catch(e) {
+    console.error(e);
+    showToast('❌ 저장 실패: ' + (e.message || e), 4000);
+  }
+}
+
+function printForm(prefix) {
+  showToast('🖨 인쇄 창을 엽니다...');
+  setTimeout(() => window.print(), 800);
+}
+
+// ── 최종 제출 ──
+async function submitForm(prefix) {
+  const items = prefix === 'corp' ? corpItems : airportItems;
+  const done = items.filter(id => results[id]).length;
+
+  const doSubmit = async () => {
+    showToast('📤 제출 중...');
+    try {
+      const data = collectFormData(prefix);
+      data.status = 'submitted';
+      const { data: row, error } = await _sb
+        .from('inspections')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+
+      // 사진 업로드
+      if (row?.id) {
+        showToast('📸 사진 업로드 중...');
+        const photos = await uploadPhotos(prefix, row.id);
+        if (photos.length > 0) {
+          await _sb.from('inspections')
+            .update({ photos })
+            .eq('id', row.id);
+        }
+      }
+      showToast('✅ 제출 완료! DB에 저장되었습니다.', 4000);
+    } catch(e) {
+      console.error(e);
+      showToast('❌ 제출 실패: ' + (e.message || e), 4000);
+    }
+  };
+
+  if (done < items.length) {
+    showModal(
+      '미완료 항목 있음',
+      `아직 ${items.length - done}개 항목이 체크되지 않았습니다. 그래도 제출하시겠습니까?`,
+      doSubmit
+    );
+  } else {
+    await doSubmit();
+  }
+}
+
+
+// ══════════════════════════════════
+//  SIGNATURE PAD
+// ══════════════════════════════════
+let currentSigTarget = null;  // 'corp' | 'airport'
+let sigTab = 'draw';
+let sigColor = '#1a2332';
+let sigThickness = 2.5;
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+let selectedFontIdx = 0;
+let uploadedSigDataUrl = null;
+
+const sigFonts = [
+  { name: '필기체 1', style: "italic 700 28px 'Noto Sans KR'" },
+  { name: '필기체 2', style: "italic 600 26px Georgia, serif" },
+  { name: '세리프',   style: "700 28px 'Times New Roman', serif" },
+  { name: '고딕',     style: "700 28px 'Noto Sans KR', sans-serif" },
+  { name: '스크립트', style: "italic 600 30px 'Palatino', serif" },
+  { name: '모노',     style: "700 24px 'IBM Plex Mono', monospace" },
+];
+
+function openSigModal(target) {
+  currentSigTarget = target;
+  document.getElementById('sig-modal-title').textContent =
+    target === 'corp' ? '✍ 확인자 서명 (기업용)' : '✍ 확인자 서명 (공항용)';
+  document.getElementById('sig-modal-overlay').classList.add('open');
+  initCanvas();
+  buildFontGrid();
+  // Resize canvas on open
+  requestAnimationFrame(() => resizeCanvas());
+}
+
+function closeSigModal() {
+  document.getElementById('sig-modal-overlay').classList.remove('open');
+}
+
+// ── TABS ──
+function switchSigTab(tab, btn) {
+  sigTab = tab;
+  document.querySelectorAll('.sig-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.sig-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('sig-panel-' + tab).classList.add('active');
+  if (tab === 'draw') setTimeout(resizeCanvas, 50);
+}
+
+// ── CANVAS DRAW ──
+function resizeCanvas() {
+  const canvas = document.getElementById('sig-canvas');
+  const wrap = document.getElementById('sig-canvas-wrap');
+  const dpr = window.devicePixelRatio || 1;
+  const w = wrap.clientWidth;
+  canvas.width = w * dpr;
+  canvas.height = 180 * dpr;
+  canvas.style.height = '180px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+}
+
+function initCanvas() {
+  const canvas = document.getElementById('sig-canvas');
+  canvas.removeEventListener('mousedown', onMD);
+  canvas.removeEventListener('mousemove', onMM);
+  canvas.removeEventListener('mouseup', onMU);
+  canvas.removeEventListener('touchstart', onTS);
+  canvas.removeEventListener('touchmove', onTM);
+  canvas.removeEventListener('touchend', onTU);
+  canvas.addEventListener('mousedown', onMD);
+  canvas.addEventListener('mousemove', onMM);
+  canvas.addEventListener('mouseup', onMU);
+  canvas.addEventListener('touchstart', onTS, {passive:false});
+  canvas.addEventListener('touchmove', onTM, {passive:false});
+  canvas.addEventListener('touchend', onTU);
+}
+
+function getPos(canvas, e) {
+  const r = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  if (e.touches) {
+    return { x: (e.touches[0].clientX - r.left), y: (e.touches[0].clientY - r.top) };
+  }
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+function onMD(e) { isDrawing=true; const p=getPos(this,e); lastX=p.x; lastY=p.y; document.getElementById('sig-canvas-wrap').classList.add('drawing'); }
+function onMM(e) { if(!isDrawing) return; draw(this, getPos(this,e)); }
+function onMU()  { isDrawing=false; }
+function onTS(e) { e.preventDefault(); isDrawing=true; const p=getPos(this,e); lastX=p.x; lastY=p.y; document.getElementById('sig-canvas-wrap').classList.add('drawing'); }
+function onTM(e) { e.preventDefault(); if(!isDrawing) return; draw(this, getPos(this,e)); }
+function onTU()  { isDrawing=false; }
+
+function draw(canvas, pos) {
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.strokeStyle = sigColor;
+  ctx.lineWidth = sigThickness;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  lastX = pos.x; lastY = pos.y;
+}
+
+function clearCanvas() {
+  const canvas = document.getElementById('sig-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('sig-canvas-wrap').classList.remove('drawing');
+}
+
+function setSigColor(el) {
+  document.querySelectorAll('.sig-color-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  sigColor = el.dataset.color;
+}
+
+function setSigThick(el) {
+  document.querySelectorAll('.sig-thick-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  sigThickness = parseFloat(el.dataset.size);
+}
+
+// ── TYPED SIG ──
+function buildFontGrid() {
+  const grid = document.getElementById('sig-font-grid');
+  grid.innerHTML = '';
+  const name = document.getElementById('sig-name-input').value || '홍길동';
+  sigFonts.forEach((f, i) => {
+    const card = document.createElement('div');
+    card.className = 'sig-font-card' + (i === selectedFontIdx ? ' active' : '');
+    card.innerHTML = `<div class="sig-preview-text" style="font:${f.style}">${name}</div><div class="sig-font-label">${f.name}</div>`;
+    card.onclick = () => {
+      document.querySelectorAll('.sig-font-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedFontIdx = i;
+    };
+    grid.appendChild(card);
+  });
+}
+
+function renderTypedSig() {
+  const name = document.getElementById('sig-name-input').value || '';
+  // Update font preview cards
+  document.querySelectorAll('.sig-font-card').forEach((card, i) => {
+    const previewEl = card.querySelector('.sig-preview-text');
+    if (previewEl) previewEl.style.font = sigFonts[i].style;
+    if (previewEl) previewEl.textContent = name || '홍길동';
+  });
+}
+
+function typeToCanvas(name, fontStyle) {
+  const c = document.getElementById('sig-type-canvas');
+  c.width = 400; c.height = 80;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 400, 80);
+  ctx.font = fontStyle;
+  ctx.fillStyle = sigColor;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(name, 10, 40);
+  return c.toDataURL('image/png');
+}
+
+// ── UPLOAD ──
+function handleSigUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    uploadedSigDataUrl = ev.target.result;
+    const preview = document.getElementById('sig-upload-preview');
+    preview.src = ev.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── APPLY ──
+function applySig() {
+  let dataUrl = null;
+
+  if (sigTab === 'draw') {
+    const canvas = document.getElementById('sig-canvas');
+    // Check if empty
+    const ctx = canvas.getContext('2d');
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const hasContent = data.some(v => v !== 0);
+    if (!hasContent) { showToast('⚠️ 서명을 먼저 그려주세요'); return; }
+    dataUrl = canvas.toDataURL('image/png');
+
+  } else if (sigTab === 'type') {
+    const name = document.getElementById('sig-name-input').value.trim();
+    if (!name) { showToast('⚠️ 이름을 입력해주세요'); return; }
+    dataUrl = typeToCanvas(name, sigFonts[selectedFontIdx].style);
+
+  } else if (sigTab === 'upload') {
+    if (!uploadedSigDataUrl) { showToast('⚠️ 이미지를 업로드해주세요'); return; }
+    dataUrl = uploadedSigDataUrl;
+  }
+
+  if (!dataUrl) return;
+
+  const img = document.getElementById(currentSigTarget + '-sig-img');
+  const box = document.getElementById(currentSigTarget + '-sig-box');
+  img.src = dataUrl;
+  box.classList.add('signed');
+  closeSigModal();
+  showToast('✅ 서명이 적용되었습니다');
+}
+
+function clearSig(e, target) {
+  e.stopPropagation();
+  const img = document.getElementById(target + '-sig-img');
+  const box = document.getElementById(target + '-sig-box');
+  img.src = '';
+  box.classList.remove('signed');
+}
+
+// Close on overlay click
+document.getElementById('sig-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeSigModal();
+});
+
+
+// ── 모바일 터치: 사진 슬롯 탭으로 오버레이 토글 ──
+function isTouchDevice() {
+  return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+}
+if (isTouchDevice()) {
+  document.addEventListener('click', function(e) {
+    const slot = e.target.closest('.photo-slot.has-photo');
+    if (!slot) return;
+    const overlay = slot.querySelector('.photo-slot-overlay');
+    if (!overlay) return;
+    // toggle visibility
+    const isVisible = overlay.style.display === 'flex';
+    // hide all overlays first
+    document.querySelectorAll('.photo-slot-overlay').forEach(o => o.style.display = '');
+    if (!isVisible) overlay.style.display = 'flex';
+  });
+}
+
+// ── 모바일 뒤로가기 시 서명 모달 닫기 ──
+window.addEventListener('popstate', () => {
+  if (document.getElementById('sig-modal-overlay').classList.contains('open')) {
+    closeSigModal();
+  }
+});
+
+// ── 스와이프로 탭 전환 (모바일) ──
+(function() {
+  let tsX = 0;
+  const pages = ['corp', 'airport', 'compare'];
+  document.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; }, {passive: true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tsX;
+    // 가로 스와이프 60px 이상, 세로 이동 작을 때만
+    if (Math.abs(dx) < 60) return;
+    // 서명모달 열려있으면 무시
+    if (document.getElementById('sig-modal-overlay').classList.contains('open')) return;
+    const cur = pages.findIndex(p => document.getElementById('page-' + p).classList.contains('active'));
+    if (cur === -1) return;
+    let next;
+    if (dx < 0 && cur < pages.length - 1) next = cur + 1;  // 왼쪽 스와이프 → 다음 탭
+    if (dx > 0 && cur > 0) next = cur - 1;                  // 오른쪽 스와이프 → 이전 탭
+    if (next !== undefined) {
+      switchPage(pages[next]);
+    }
+  }, {passive: true});
+})();
+
+// Set today's date
+const today = new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type=date]').forEach(d => d.value = today);
+</script>
+</body>
+</html>
